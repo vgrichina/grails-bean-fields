@@ -206,8 +206,15 @@ class BeanTagLib {
     /**
      * Set the template for text input fields
      */
-    def textFieldTemplate = { attrs, body -> 
+    def inputTemplate = { attrs, body -> 
         setParam('INPUT_TEMPLATE', body)
+    }
+
+    /**
+     * Set the template for text input fields
+     */
+    def textAreaTemplate = { attrs, body -> 
+        setParam('TEXTAREA_TEMPLATE', body)
     }
 
     /**
@@ -225,6 +232,13 @@ class BeanTagLib {
     }
 
     /**
+     * Set the template for radio groups
+     */
+    def radioGroupTemplate = { attrs, body ->
+        setParam('RADIOGROUP_TEMPLATE', body)
+    }
+
+    /**
      * Set the template for date picker
      */
     def dateTemplate = { attrs, body ->
@@ -239,6 +253,13 @@ class BeanTagLib {
     }
 
     /**
+     * Set the template for custom render
+     */
+    def customTemplate = { attrs, body ->
+        setParam('CUSTOM_TEMPLATE', body)
+    }
+
+    /**
      * Set the max length of any input field, even if constraints exceed it
      */
     def maxInputLength = { attrs, body ->
@@ -250,6 +271,13 @@ class BeanTagLib {
      */
     def errorClass = { attrs, body ->
         setParam('ERROR_CLASS', body())
+    }
+
+    /**
+     * Set the template for a single error
+     */
+    def errorTemplate = { attrs, body ->
+        setParam('ERROR_TEMPLATE', body)
     }
 
     /**
@@ -469,9 +497,7 @@ class BeanTagLib {
 		    
 		    // See if its an association
 		    // @Todo add multiselect support for associations of Set and List
-		    System.out.println "is select on a domain class? ${prop.name} : ${prop.type}"
 		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, prop.type)) {
-			    System.out.println "is select on a domain class? YES"
 		        if (from instanceof Closure) {
 		            // Let caller apply some kind of logic/sort/criteria
 		            from = overrideFrom()
@@ -479,9 +505,7 @@ class BeanTagLib {
 		            from = prop.type.list() 
 	            }
 	            // Hack for Grails 1.1 bug requiring xxx.id assignment for selecting domain instances
-			    System.out.println "select hacking field name"
 	            fldname += '.id'
-			    System.out.println "select hacked field name: $fldname"
 	            checkValue = renderParams.fieldValue?.id // Compare value to id
 		    } else if (from == null) {
 		        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
@@ -884,19 +908,6 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	  */
 	 def getFieldValue = {bean, fieldName ->
       	return bean[fieldName]
-	}
-
-	def renderForShow = {label, fieldValue ->
-		out << """
-			<div class="formField">
-				<span class="fieldLabel">
-					${label}:
-				</span>
-				<span class="showField">
-					${fieldValue}
-				</span>
-			</div>
-		"""
 	}
 
     def buildErrors(def template, def errors) {

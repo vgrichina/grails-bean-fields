@@ -1,0 +1,7 @@
+--Output from testTemplateVarExpansion--
+--Output from testInputField--
+--Output from testAutoFieldForDate--
+--Output from testAutoFieldForString--
+--Output from testAutoFieldForBoolean--
+--Output from testInputFieldNestedProperty--
+--Output from testForm--

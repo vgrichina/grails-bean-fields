@@ -1,0 +1,10 @@
+Testsuite: BeanTagLibTests
+Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 1.153 sec
+------------- Standard Output ---------------
+--Output from testSetTextFieldTemplate--
+------------- ---------------- ---------------
+------------- Standard Error -----------------
+--Output from testSetTextFieldTemplate--
+------------- ---------------- ---------------
+
+Testcase: testSetTextFieldTemplate took 1.149 sec
