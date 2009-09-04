@@ -459,28 +459,37 @@ class BeanTagLib {
             
             def checkValue = renderParams.fieldValue
             
-			if (from == null || !(from instanceof List) ) {
-			    def prop = renderParams.bean.metaClass.getMetaProperty(renderParams.fieldName)
-			    
-			    // See if its an association
-			    // @Todo add multiselect support for associations of Set and List
-			    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, prop.type)) {
-			        if (overrideFrom instanceof Closure) {
-			            // Let caller apply some kind of logic/sort/criteria
-			            from = overrideFrom()
-		            } else if (overrideFrom == null) {
-			            from = prop.type.list() // add params here for sorting etc
-		            }
-		            // Hack for Grails 1.1 bug requiring xxx.id assignment for selecting domain instances
-		            fldname += '.id'
-		            checkValue = renderParams.fieldValue?.id // Compare value to id
-			    } else {
-			        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
-    			    if (!from) {
-    			        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.range
-    		        }
+            // If bean is a domain class, ask grails what kind of relationship it is
+            // Hibernate proxies/shenanigans means that sometimes getMetaProperty might not be right
+            // so we must do this instead
+            def domainArtefact = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, renderParams.bean.class.name)
+		    def prop = domainArtefact ? 
+		        domainArtefact.getPropertyByName(renderParams.fieldName) : 
+		        renderParams.bean.metaClass.getMetaProperty(renderParams.fieldName)
+		    
+		    // See if its an association
+		    // @Todo add multiselect support for associations of Set and List
+		    System.out.println "is select on a domain class? ${prop.name} : ${prop.type}"
+		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, prop.type)) {
+			    System.out.println "is select on a domain class? YES"
+		        if (from instanceof Closure) {
+		            // Let caller apply some kind of logic/sort/criteria
+		            from = overrideFrom()
+	            } else if (from == null) {
+		            from = prop.type.list() 
+	            }
+	            // Hack for Grails 1.1 bug requiring xxx.id assignment for selecting domain instances
+			    System.out.println "select hacking field name"
+	            fldname += '.id'
+			    System.out.println "select hacked field name: $fldname"
+	            checkValue = renderParams.fieldValue?.id // Compare value to id
+		    } else if (from == null) {
+		        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
+			    if (!from) {
+			        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.range
 		        }
-            }
+	        }
+
 			// Do label
 			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
 
