@@ -507,6 +507,7 @@ class BeanTagLib {
 	            // Hack for Grails 1.1 bug requiring xxx.id assignment for selecting domain instances
 	            fldname += '.id'
 	            checkValue = renderParams.fieldValue?.id // Compare value to id
+	            attrs.optionKey = 'id' // id field is the key
 		    } else if (from == null) {
 		        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
 			    if (!from) {
