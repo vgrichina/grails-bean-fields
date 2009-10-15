@@ -24,14 +24,11 @@ import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.web.taglib.GroovyPageTagBody
 
-// @todo Add bean:form tag that takes beanName so is not required in individual tags
-// (but can be supplied to override)
 // @todo Add bean:autoForm that takes a bean name and controller/action/url etc and automatically
 // renders the whole form for all properties. Option to include/exclude certain props
-// @todo Add $_tag.labelStart and $_tag.labelEnd in addition $_tag.label to give more flexibility
 // @todo Make all tags pass through unrecognized attributes such as "id"
-// @todo Make modelDate support min and max values for date fields, in terms of the years shown
-// @todo Make modelCountry support inList constraint to constrain the list of permitted countries
+// @todo Make date tag support min and max values for date fields, in terms of the years shown
+// @todo Make country tag support inList constraint to constrain the list of permitted countries
 
 /**
  * A tag library that contains tags to help rendering of fields to edit bean properties, using their constraints
@@ -150,7 +147,7 @@ class BeanTagLib {
 	}
 	
     static final Closure DEFAULT_LABEL_RENDERING = { args ->
-        "<label for=\"${args.fieldId}\" class=\"${args.errorClassToUse}\">${args.label}${args.required}</label>"
+        "<label for=\"${args.fieldId}\" class=\"${args.errorClassToUse}\">${args.label.encodeAsHTML()}${args.required}</label>"
     }
 	
 	static final Map DEFAULT_PARAMS = Collections.unmodifiableMap([
@@ -291,7 +288,7 @@ class BeanTagLib {
      * Set whether or not errors are rendered inline
      */
     def showErrors = { attrs ->
-        setParam('SHOW_ERRORS', attrs.value)
+        setParam('SHOW_ERRORS', body())
     }
 
     def label = { attrs ->
@@ -314,7 +311,11 @@ class BeanTagLib {
 
 			// Use the current template closure if set
 			out << tagInfo.CUSTOM_TEMPLATE(label:label, field:body(),
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
     }
     
@@ -459,8 +460,14 @@ class BeanTagLib {
 			def input = """<input class="${suppliedClass} ${renderParams.errorClassToUse}" type="${type}" ${sizeToUse} ${maxLengthToUse} ${renderParams.varArgs} name="${renderParams.fieldName}" value="${renderParams.fieldValue == null ? '' : renderParams.fieldValue.encodeAsHTML()}" />"""
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			out << tagInfo.INPUT_TEMPLATE(label:label, field:input, required:
-				renderParams.mandatoryFieldFlagToUse, errors: errors)
+			out << tagInfo.INPUT_TEMPLATE(label:label, 
+			    field:input, 
+			    required:renderParams.mandatoryFieldFlagToUse, 
+			    errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 	}
 
@@ -532,7 +539,11 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			out << tagInfo.SELECT_TEMPLATE(label:label, field:select,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 	}
 
@@ -564,7 +575,11 @@ class BeanTagLib {
 
 			// Use the current template closure if set
 			out << tagInfo.DATE_TEMPLATE(label:label, field:datePicker,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 	}
 
@@ -590,7 +605,11 @@ class BeanTagLib {
 
 			// Use the current template closure if set
 			out << tagInfo.TEXTAREA_TEMPLATE(label:label, field:textArea,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 
 	}
@@ -622,7 +641,11 @@ class BeanTagLib {
 
 			// Use the current template closure if set
 			out << tagInfo.CHECKBOX_TEMPLATE(label:label, field:checkBox,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 	}
 
@@ -641,19 +664,25 @@ class BeanTagLib {
 
     			// Do label per field based on value
     			def labelParams = new HashMap(renderParams)
-    			labelParams.fieldName = attrs['id']
-    			labelParams.labelKey = renderParams.beanName +'.label.' + renderParams.fieldName + '.' + currentValue
+     			labelParams.fieldName = attrs['id']
+    			labelParams.labelKey = renderParams.beanName + renderParams.fieldName + '.' + currentValue
     			labelParams.label = '' // clear what is there
-    			labelParams.label = getLabelForField( labelParams, renderParams.beanName, renderParams.fieldName)
-    			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+    			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
+    			    renderParams.beanName, renderParams.fieldName)
+    			labelParams.label = getLabelForField( label, labelKey, renderParams.fieldName)
+    			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(labelParams) : ''
 
     			def r = g.radio( attrs)
 
     			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
     			// Use the current template closure if set
-				out << tagInfo.RADIO_TEMPLATE(label:label, field:r,
-					required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				out << tagInfo.RADIOGROUP_TEMPLATE(label:label, field:r,
+					required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+    			    bean: renderParams.bean,
+    			    beanName: renderParams.beanName,
+    			    labelKey: renderParams.labelKey,
+    			    propertyName: renderParams.propertyName)
     		}
 		})
 	}
@@ -681,7 +710,11 @@ class BeanTagLib {
 
 			// Use the current template closure if set
 			out << tagInfo.COUNTRY_TEMPLATE( label:label, field:countrySelect,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors)
+				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 	}
 
@@ -768,7 +801,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		if (showErrors == null) {
 			showErrors = tagInfo['SHOW_ERRORS']
 		}
-		def mandatoryFieldIndicator = attrs.remove("mandatoryField")
+		def mandatoryFieldIndicator = attrs.remove("requiredField")
 		
 
 		def overrideValue = attrs.remove("value")
@@ -781,11 +814,21 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			useValue = Boolean.valueOf(useValueCondition)
 		}
 
+        def origPropPath = attrs._BEAN.originalPropertyPath
+        def constraints = attrs._BEAN.constraints
+        
+
         def useLabel = true
         if (attrs.noLabel != null) {
             useLabel = !attrs.remove('noLabel').toString().toBoolean()
         }
-		def label = useLabel ? getLabelForField(attrs, beanName, fieldName) : null
+		def label
+	    def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
+		    beanName, origPropPath)
+
+		if (useLabel) {
+			label = getLabelForField( label, labelKey, origPropPath)
+		} 
 
 		def hasFieldErrors = false
 		def errorClassToUse = ""
@@ -820,9 +863,6 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			}
 		}
 
-        def origPropPath = attrs._BEAN.originalPropertyPath
-        def constraints = attrs._BEAN.constraints
-        
 		// Get the optional args we do not need so we can echo 'as is'
 		attrs.remove('_BEAN')
 		def varArgs = ""
@@ -843,6 +883,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			"beanConstraints":constraints,
 			"beanName":beanName,
 			"propertyName":fieldName,
+			"labelKey":labelKey,
 			"errors": showErrors ? (bean?.metaClass?.hasProperty(bean, 'errors') ? bean?.errors?.getFieldErrors(fieldName) : null) : null
 		]
 
@@ -919,7 +960,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
                 output << template([error:it, message:getMessage(it)])
             }
             else {
-                output << getMessage(it) + "<br/>"
+                output << getMessage(it).encodeAsHTML() + "<br/>"
             }
         }
         return output
@@ -936,6 +977,13 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
         return message
     }
 
+	def getLabelKeyForField = { labelKey, beanName, fieldName -> 
+		if (!labelKey) {
+			labelKey = beanName + "." + fieldName
+		}
+		return labelKey
+    }
+    
 	/*
 	 * Get the label for the field:-
 	 *   - if 'label' attribute is specified use it 'as is'
@@ -945,13 +993,9 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	 *     as the key for an 118N'd message
 	 *   - if still null use the convention of <Field Name>
 	*/
-	def getLabelForField = {attrs, beanName, fieldName ->
-		def label = attrs.remove("label")
-		def labelKey = attrs.remove("labelKey")
-		if (label == null) {
-			if (!labelKey) {
-				labelKey = beanName + "." + fieldName
-			}
+	def getLabelForField = { label, labelKey, fieldName ->
+	    // deliberately check for null - label = '' means "no label thanks!"
+		if (label == null) { 
 			label = getMessage(labelKey, false)
 		}
 		if (label == null) {
