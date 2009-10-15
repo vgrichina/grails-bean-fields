@@ -332,7 +332,6 @@ class BeanTagLib {
         if (!beanName) {
             throwTagError "Tag [form] requires attribute [beanName]"
         }
-        tagParams['BEANNAME'] = beanName
         def props = attrs.properties
         if (!props) {
             throwTagError "Tag [form] requires attribute [properties] containing a list of property names (comma-delimited or List)"
@@ -343,7 +342,6 @@ class BeanTagLib {
         props.each { p ->
             out << field(beanName:beanName, property:p.trim())
         }
-        tagParams['BEANNAME'] = null        
     }
     
     /**
