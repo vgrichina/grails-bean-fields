@@ -1,4 +1,4 @@
-<plugin name='bean-fields' version='0.3' grailsVersion='1.1.1 &gt; *'>
+<plugin name='bean-fields' version='0.4-SNAPSHOT' grailsVersion='1.1.1 &gt; *'>
   <author>Marc Palmer</author>
   <authorEmail>marc@grailsrocks.com</authorEmail>
   <title>Bean Fields - smart tags for command and domain objects</title>
@@ -7,7 +7,9 @@ Quick and easy smart rendering of fields of domain and command objects.
 </description>
   <documentation>http://grails.org/plugin/bean-fields</documentation>
   <resources>
+    <resource>UrlMappings</resource>
     <resource>com.grailsrocks.beanfields.BeanTagLib</resource>
   </resources>
   <dependencies />
+  <behavior />
 </plugin>

@@ -147,12 +147,13 @@ class BeanTagLib {
 	}
 	
     static final Closure DEFAULT_LABEL_RENDERING = { args ->
-        "<label for=\"${args.fieldId}\" class=\"${args.errorClassToUse}\">${args.label.encodeAsHTML()}${args.required}</label>"
+        "<label for=\"${args.fieldId}\" class=\"${args.labelClass} ${args.errorClassToUse}\">${args.label.encodeAsHTML()}${args.required}</label>"
     }
 	
 	static final Map DEFAULT_PARAMS = Collections.unmodifiableMap([
 		MAX_INPUT_DISPLAY_LENGTH : 60,
 		ERROR_CLASS: "error",
+		LABEL_CLASS: '',
 		REQUIRED_INDICATOR: "*",
 		SHOW_ERRORS: true,
 		LABEL_TEMPLATE: DEFAULT_LABEL_RENDERING,
@@ -264,6 +265,13 @@ class BeanTagLib {
     }
 
     /**
+     * Set the CSS class to use when rendering labels
+     */
+    def labelClass = { attrs, body ->
+        setParam('LABEL_CLASS', body())
+    }
+
+    /**
      * Set the CSS class to use when rendering errors
      */
     def errorClass = { attrs, body ->
@@ -317,6 +325,25 @@ class BeanTagLib {
 			    labelKey: renderParams.labelKey,
 			    propertyName: renderParams.propertyName)
 		})
+    }
+    
+    def form = { attrs -> 
+        def beanName = attrs.beanName
+        if (!beanName) {
+            throwTagError "Tag [form] requires attribute [beanName]"
+        }
+        tagParams['BEANNAME'] = beanName
+        def props = attrs.properties
+        if (!props) {
+            throwTagError "Tag [form] requires attribute [properties] containing a list of property names (comma-delimited or List)"
+        }
+        if (!(props instanceof List)) {
+            props = props.toString().tokenize(',')
+        }
+        props.each { p ->
+            out << field(beanName:beanName, property:p.trim())
+        }
+        tagParams['BEANNAME'] = null        
     }
     
     /**
@@ -742,7 +769,7 @@ class BeanTagLib {
 
     void assertBeanName(beanName) {
 		if (!beanName) {
-            throwTagError("All bean tags require attribute [beanName], or an enclosing [bean:form] tag with it defined there")
+            throwTagError("All bean field tags require attribute [beanName] tag with it defined there")
 		}
     }
 
@@ -826,9 +853,12 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	    def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
 		    beanName, origPropPath)
 
+        def labelClass
 		if (useLabel) {
 			label = getLabelForField( label, labelKey, origPropPath)
+			labelClass = attrs.remove('labelClass') ?: tagInfo.LABEL_CLASS
 		} 
+		
 
 		def hasFieldErrors = false
 		def errorClassToUse = ""
@@ -884,6 +914,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			"beanName":beanName,
 			"propertyName":fieldName,
 			"labelKey":labelKey,
+			"labelClass":labelClass,
 			"errors": showErrors ? (bean?.metaClass?.hasProperty(bean, 'errors') ? bean?.errors?.getFieldErrors(fieldName) : null) : null
 		]
 

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<testsuite errors="0" failures="0" hostname="marcmacbook.local" name="BeanTagLibTests" tests="1" time="1.153" timestamp="2009-09-04T18:48:58">
-  <properties />
-  <testcase classname="BeanTagLibTests" name="testSetTextFieldTemplate" time="1.149" />
-  <system-out><![CDATA[--Output from testSetTextFieldTemplate--
-]]></system-out>
-  <system-err><![CDATA[--Output from testSetTextFieldTemplate--
-]]></system-err>
-</testsuite>
