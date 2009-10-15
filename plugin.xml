@@ -10,8 +10,6 @@ Quick and easy smart rendering of fields of domain and command objects.
     <resource>UrlMappings</resource>
     <resource>com.grailsrocks.beanfields.BeanTagLib</resource>
   </resources>
-  <dependencies>
-    <resolvers />
-  </dependencies>
+  <dependencies />
   <behavior />
 </plugin>
