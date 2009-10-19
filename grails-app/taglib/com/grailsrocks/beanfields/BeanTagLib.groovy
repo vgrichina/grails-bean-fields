@@ -296,7 +296,7 @@ class BeanTagLib {
      * Set whether or not errors are rendered inline
      */
     def showErrors = { attrs ->
-        setParam('SHOW_ERRORS', body())
+        setParam('SHOW_ERRORS', attrs.value)
     }
 
     def label = { attrs ->
