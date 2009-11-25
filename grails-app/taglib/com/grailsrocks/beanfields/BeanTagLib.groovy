@@ -868,7 +868,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		}
 
 		if (isFieldMandatory(bean, fieldName)) {
-			if (mandatoryFieldIndicator) {
+			if (mandatoryFieldIndicator != null) {
 				mandatoryFieldFlagToUse = mandatoryFieldIndicator
 			} else {
 				mandatoryFieldFlagToUse = tagInfo.REQUIRED_INDICATOR
