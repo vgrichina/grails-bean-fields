@@ -945,11 +945,21 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		if (bean?.metaClass?.hasProperty(bean, 'constraints')) {
 		    def cons = bean.constraints
 		    if (cons != null) {
+                if (log.debugEnabled) {
+                    log.debug "Bean is of type ${bean.class} - the constraints property was a [${cons.class}]"
+                }
+                
 		        // Safety check for the case where bean is no a proper domain/command object
 		        // This avoids confusing errors where constraints comes back as a Closuret
 		        if (!(cons instanceof Map)) {
-		            log.warning "Bean of type ${bean.class} is not a domain class, command object or other validateable object"
+    	            if (log.warnEnabled) {
+		                log.warn "Bean of type ${bean.class} is not a domain class, command object or other validateable object - the constraints property was a [${cons.class}]"
+	                }
 		        }
+	        } else {
+	            if (log.warnEnabled) {
+	                log.warn "Bean of type ${bean.class} has no constraints"
+                }
 	        }
             return cons
 	    } else return null
