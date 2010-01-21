@@ -183,11 +183,11 @@ class BeanTagLib {
 			// Clone default closures
 			DEFAULT_PARAMS.each { k, v ->
 			    def code
-			    if (v instanceof Closure) {
+			    if (v instanceof GroovyPageTagBody) {
+			        code = v.@bodyClosure.clone()
+			    } else if (v instanceof Closure) {
 			        code = v.clone()
-			    } else if (v instanceof GroovyPageTagBody) {
-			        code = v.bodyClosure.clone()
-			    }
+		        }
 		        tagSettings[k] = code != null ? code : v
 			}
 			return tagSettings
@@ -198,63 +198,71 @@ class BeanTagLib {
      * Set the template for labels
      */
     def labelTemplate = { attrs, body ->
-        setParam('LABEL_TEMPLATE', body)
+        setParam('LABEL_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
     def inputTemplate = { attrs, body -> 
-        setParam('INPUT_TEMPLATE', body)
+        System.out.println "inputTemplate - body is a ${body.class} and bodyClosure is ${body.@bodyClosure}"
+        setParam('INPUT_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
     def textAreaTemplate = { attrs, body -> 
-        setParam('TEXTAREA_TEMPLATE', body)
+        setParam('TEXTAREA_TEMPLATE', body.@bodyClosure)
+    }
+
+    /**
+     * Set the template for text input fields
+     */
+    def countryTemplate = { attrs, body -> 
+        setParam('COUNTRY_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for a checkbox
      */
     def checkBoxTemplate = { attrs, body ->
-        setParam('CHECKBOX_TEMPLATE', body)
+        setParam('CHECKBOX_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for radio button
      */
     def radioTemplate = { attrs, body ->
-        setParam('RADIO_TEMPLATE', body)
+        setParam('RADIO_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for radio groups
      */
     def radioGroupTemplate = { attrs, body ->
-        setParam('RADIOGROUP_TEMPLATE', body)
+        setParam('RADIOGROUP_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for date picker
      */
     def dateTemplate = { attrs, body ->
-        setParam('DATE_TEMPLATE', body)
+        setParam('DATE_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for select box
      */
     def selectTemplate = { attrs, body ->
-        setParam('SELECT_TEMPLATE', body)
+        setParam('SELECT_TEMPLATE', body.@bodyClosure)
     }
 
     /**
      * Set the template for custom render
      */
     def customTemplate = { attrs, body ->
-        setParam('CUSTOM_TEMPLATE', body)
+        setParam('CUSTOM_TEMPLATE', body.@bodyClosure)
     }
 
     /**
@@ -282,7 +290,7 @@ class BeanTagLib {
      * Set the template for a single error
      */
     def errorTemplate = { attrs, body ->
-        setParam('ERROR_TEMPLATE', body)
+        setParam('ERROR_TEMPLATE', body.@bodyClosure)
     }
 
     /**
@@ -304,7 +312,7 @@ class BeanTagLib {
         attrs.noLabel = false
 
 		doTag( attrs, { renderParams ->
-		    out << tagInfo.LABEL_TEMPLATE(renderParams)
+		    out << tagInfo.LABEL_TEMPLATE.clone().call(renderParams)
 	    })
     }
     
@@ -313,12 +321,12 @@ class BeanTagLib {
 		doTag( attrs, { renderParams ->
 
 			// Do label
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.CUSTOM_TEMPLATE(label:label, field:body(),
+			out << tagInfo.CUSTOM_TEMPLATE.clone().call(label:label, field:body(),
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
@@ -360,7 +368,7 @@ class BeanTagLib {
 		def mandatoryFieldIndicator = attrs.remove("mandatoryField")
 
 		// Get the bean so we can get the current value and check for errors
-		def bean = pageScope[beanName]
+		def bean = pageScope.variables[beanName]
 
 		def resolvedBeanInfo = getActualBeanAndProperty(bean, fieldName)
 		bean = resolvedBeanInfo[0]
@@ -440,6 +448,11 @@ class BeanTagLib {
             out << this."$tagName"(attrs)
         }
     }
+    
+    def hidden = { attrs ->
+        attrs.type = "hidden"
+        out << input(attrs)
+    }
 	
 	/**
      * Render an input field based on the value of a bean property.
@@ -480,12 +493,12 @@ class BeanTagLib {
 				}
 			}
 
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 			
 			def input = """<input class="${suppliedClass} ${renderParams.errorClassToUse}" type="${type}" ${sizeToUse} ${maxLengthToUse} ${renderParams.varArgs} name="${renderParams.fieldName}" value="${renderParams.fieldValue == null ? '' : renderParams.fieldValue.encodeAsHTML()}" />"""
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			out << tagInfo.INPUT_TEMPLATE(label:label, 
+			out << tagInfo.INPUT_TEMPLATE.clone().call(label:label, 
 			    field:input, 
 			    required:renderParams.mandatoryFieldFlagToUse, 
 			    errors: errors,
@@ -548,7 +561,7 @@ class BeanTagLib {
 	        }
 
 			// Do label
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 
             if (!renderParams.mandatoryFieldFlagToUse) {
                 attrs.noSelection = noSel
@@ -563,7 +576,7 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			out << tagInfo.SELECT_TEMPLATE(label:label, field:select,
+			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label, field:select,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
@@ -584,7 +597,7 @@ class BeanTagLib {
 			// Do label
 			def labelParams = new HashMap(renderParams)
 			labelParams.fieldName = labelParams.fieldName + "_day" // point label to day element
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 
 			// Defer to form taglib
 			attrs['name'] = renderParams.fieldName
@@ -599,7 +612,7 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.DATE_TEMPLATE(label:label, field:datePicker,
+			out << tagInfo.DATE_TEMPLATE.clone().call(label:label, field:datePicker,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
@@ -616,9 +629,11 @@ class BeanTagLib {
 
 		def tagInfo = tagParams
 
+        System.out.println "tagParams are: $tagInfo"
+        
 		doTag( attrs, { renderParams ->
 			// Do label
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 
 			// Defer to form taglib
 			attrs['name'] = renderParams.fieldName
@@ -628,8 +643,12 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
+            System.out.println "Trying to write out text area. tagInfo is $tagInfo"
+            System.out.println "template is non-null? " + (tagInfo.TEXTAREA_TEMPLATE != null)
+            System.out.println "render params are $renderParams"
+
 			// Use the current template closure if set
-			out << tagInfo.TEXTAREA_TEMPLATE(label:label, field:textArea,
+			out << tagInfo.TEXTAREA_TEMPLATE.clone().call(label:label, field:textArea,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
@@ -651,7 +670,7 @@ class BeanTagLib {
 		doTag( attrs, { renderParams ->
 
 			// Do label
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 
 			// Defer to form taglib
 			attrs['name'] = renderParams.fieldName
@@ -665,7 +684,7 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.CHECKBOX_TEMPLATE(label:label, field:checkBox,
+			out << tagInfo.CHECKBOX_TEMPLATE.clone().call(label:label, field:checkBox,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
@@ -695,14 +714,14 @@ class BeanTagLib {
     			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
     			    renderParams.beanName, renderParams.fieldName)
     			labelParams.label = getLabelForField( label, labelKey, renderParams.fieldName)
-    			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(labelParams) : ''
+    			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
 
     			def r = g.radio( attrs)
 
     			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
     			// Use the current template closure if set
-				out << tagInfo.RADIOGROUP_TEMPLATE(label:label, field:r,
+				out << tagInfo.RADIOGROUP_TEMPLATE.clone().call(label:label, field:r,
 					required:renderParams.mandatoryFieldFlagToUse, errors: errors,
     			    bean: renderParams.bean,
     			    beanName: renderParams.beanName,
@@ -722,7 +741,7 @@ class BeanTagLib {
 		doTag( attrs, { renderParams ->
 
 			// Do label
-			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE(renderParams) : ''
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
 
 			// Defer to form taglib
 			attrs['name'] = renderParams.fieldName
@@ -734,7 +753,7 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.COUNTRY_TEMPLATE( label:label, field:countrySelect,
+			out << tagInfo.COUNTRY_TEMPLATE.clone().call( label:label, field:countrySelect,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
@@ -758,7 +777,7 @@ class BeanTagLib {
         if (!name)
             throwTagError("requireBean tag requires attribute [beanName] indicating the class to instantiate")
 
-        def bean = request.getAttribute(name)
+        def bean = pageScope.variables[name]
         if (bean == null) {
             bean = ApplicationHolder.application.classLoader.loadClass(cls).newInstance()
             pageScope[name] = bean
@@ -797,7 +816,7 @@ class BeanTagLib {
 	    assertBeanName(attrs._BEAN.beanName)
 
 		// Get the root bean so we can get the current value and check for errors
-		attrs._BEAN.bean = pageScope[attrs._BEAN.beanName]
+		attrs._BEAN.bean = pageScope.variables[attrs._BEAN.beanName]
 
 		if (attrs._BEAN.bean) {
     		def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.fieldName)
@@ -996,7 +1015,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
         errors?.each() {
             if (template) {
                 // @todo this could be more efficient but is a little tricky with exceptions
-                output << template([error:it, message:getMessage(it)])
+                output << template.clone().call([error:it, message:getMessage(it)])
             }
             else {
                 output << getMessage(it).encodeAsHTML() + "<br/>"
