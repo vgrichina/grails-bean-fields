@@ -451,6 +451,7 @@ class BeanTagLib {
     
     def hidden = { attrs ->
         attrs.type = "hidden"
+        attrs.noLabel = true
         out << input(attrs)
     }
 	
