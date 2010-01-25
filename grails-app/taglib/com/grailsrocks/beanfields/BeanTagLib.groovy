@@ -181,6 +181,7 @@ class BeanTagLib {
 		    def tagSettings = [:]
 			request[BEAN_PARAMS] = tagSettings
 			// Clone default closures
+			// @todo make the template cloning LAZY, cloning everything is wasteful
 			DEFAULT_PARAMS.each { k, v ->
 			    def code
 			    if (v instanceof GroovyPageTagBody) {
@@ -198,71 +199,70 @@ class BeanTagLib {
      * Set the template for labels
      */
     def labelTemplate = { attrs, body ->
-        setParam('LABEL_TEMPLATE', body.@bodyClosure)
+        setParam('LABEL_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
     def inputTemplate = { attrs, body -> 
-        System.out.println "inputTemplate - body is a ${body.class} and bodyClosure is ${body.@bodyClosure}"
-        setParam('INPUT_TEMPLATE', body.@bodyClosure)
+        setParam('INPUT_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
     def textAreaTemplate = { attrs, body -> 
-        setParam('TEXTAREA_TEMPLATE', body.@bodyClosure)
+        setParam('TEXTAREA_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
     def countryTemplate = { attrs, body -> 
-        setParam('COUNTRY_TEMPLATE', body.@bodyClosure)
+        setParam('COUNTRY_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for a checkbox
      */
     def checkBoxTemplate = { attrs, body ->
-        setParam('CHECKBOX_TEMPLATE', body.@bodyClosure)
+        setParam('CHECKBOX_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for radio button
      */
     def radioTemplate = { attrs, body ->
-        setParam('RADIO_TEMPLATE', body.@bodyClosure)
+        setParam('RADIO_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for radio groups
      */
     def radioGroupTemplate = { attrs, body ->
-        setParam('RADIOGROUP_TEMPLATE', body.@bodyClosure)
+        setParam('RADIOGROUP_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for date picker
      */
     def dateTemplate = { attrs, body ->
-        setParam('DATE_TEMPLATE', body.@bodyClosure)
+        setParam('DATE_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for select box
      */
     def selectTemplate = { attrs, body ->
-        setParam('SELECT_TEMPLATE', body.@bodyClosure)
+        setParam('SELECT_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for custom render
      */
     def customTemplate = { attrs, body ->
-        setParam('CUSTOM_TEMPLATE', body.@bodyClosure)
+        setParam('CUSTOM_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
@@ -290,7 +290,7 @@ class BeanTagLib {
      * Set the template for a single error
      */
     def errorTemplate = { attrs, body ->
-        setParam('ERROR_TEMPLATE', body.@bodyClosure)
+        setParam('ERROR_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
