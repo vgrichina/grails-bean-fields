@@ -630,8 +630,6 @@ class BeanTagLib {
 
 		def tagInfo = tagParams
 
-        System.out.println "tagParams are: $tagInfo"
-        
 		doTag( attrs, { renderParams ->
 			// Do label
 			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
@@ -643,10 +641,6 @@ class BeanTagLib {
 			def textArea = g.textArea(attrs)
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
-
-            System.out.println "Trying to write out text area. tagInfo is $tagInfo"
-            System.out.println "template is non-null? " + (tagInfo.TEXTAREA_TEMPLATE != null)
-            System.out.println "render params are $renderParams"
 
 			// Use the current template closure if set
 			out << tagInfo.TEXTAREA_TEMPLATE.clone().call(label:label, field:textArea,
