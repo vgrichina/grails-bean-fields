@@ -154,6 +154,7 @@ class BeanTagLib {
 		MAX_INPUT_DISPLAY_LENGTH : 60,
 		ERROR_CLASS: "error",
 		LABEL_CLASS: '',
+		MAX_AUTO_RADIO_BUTTONS: 4,
 		REQUIRED_INDICATOR: "*",
 		SHOW_ERRORS: true,
 		LABEL_TEMPLATE: DEFAULT_LABEL_RENDERING,
@@ -180,16 +181,9 @@ class BeanTagLib {
 		} else {
 		    def tagSettings = [:]
 			request[BEAN_PARAMS] = tagSettings
-			// Clone default closures
-			// @todo make the template cloning LAZY, cloning everything is wasteful
+            // Copy default closures, MUST be cloned before calling
 			DEFAULT_PARAMS.each { k, v ->
-			    def code
-			    if (v instanceof GroovyPageTagBody) {
-			        code = v.@bodyClosure.clone()
-			    } else if (v instanceof Closure) {
-			        code = v.clone()
-		        }
-		        tagSettings[k] = code != null ? code : v
+		        tagSettings[k] = v
 			}
 			return tagSettings
 		}
@@ -419,6 +413,7 @@ class BeanTagLib {
      * This is a convenience method, it is not particularly efficient!
      */
     def field = { attrs ->
+        def tagInfo = tagParams
         resolveBeanAndProperty(attrs)
         def fieldName = attrs._BEAN.fieldName
         def propertyType = attrs._BEAN.bean.metaClass.getMetaProperty(fieldName).type
@@ -436,7 +431,7 @@ class BeanTagLib {
             if (Date.isAssignableFrom(propertyType)) {
                 tagName = 'date'
             } else if (inList) {
-                tagName = inList.size < 4 ? 'radioGroup' : 'select'
+                tagName = (inList.size < tagInfo.MAX_AUTO_RADIO_BUTTONS) ? 'radioGroup' : 'select'
             } else if (Boolean.isAssignableFrom(propertyType)) {
                 tagName = 'checkBox'
             } else if (String.isAssignableFrom(propertyType) && (constraints?.maxSize == 0 || constraints?.maxSize > 80)) {
@@ -529,6 +524,8 @@ class BeanTagLib {
 		doTag( attrs, { renderParams ->
 			def from = overrideFrom
 
+            println "In select, label is [${renderParams.label}]"
+            
             def fldname = renderParams.fieldName
             
             def checkValue = renderParams.fieldValue
@@ -538,8 +535,8 @@ class BeanTagLib {
             // so we must do this instead
             def domainArtefact = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, renderParams.bean.class.name)
 		    def prop = domainArtefact ? 
-		        domainArtefact.getPropertyByName(renderParams.fieldName) : 
-		        renderParams.bean.metaClass.getMetaProperty(renderParams.fieldName)
+		        domainArtefact.getPropertyByName(renderParams.propertyName) : 
+		        renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName)
 		    
 		    // See if its an association
 		    // @Todo add multiselect support for associations of Set and List
@@ -562,7 +559,9 @@ class BeanTagLib {
 	        }
 
 			// Do label
+            println "In select, creating label, label is [${renderParams.label}]"
 			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
+            println "In select, after creating label, label is [${label}]"
 
             if (!renderParams.mandatoryFieldFlagToUse) {
                 attrs.noSelection = noSel
@@ -577,6 +576,7 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
+            println "In select, before calling select tempate, label is [${label}]"
 			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label, field:select,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
@@ -693,7 +693,7 @@ class BeanTagLib {
 
         doTag( attrs, { renderParams ->
 
-            renderParams.beanConstraints?.get(renderParams.fieldName).inList?.eachWithIndex() { currentValue, idx ->
+            renderParams.beanConstraints?.get(renderParams.propertyName).inList?.eachWithIndex() { currentValue, idx ->
 
     			// Defer to form taglib
     			attrs['name'] = renderParams.fieldName
@@ -706,10 +706,14 @@ class BeanTagLib {
      			labelParams.fieldName = attrs['id']
     			labelParams.labelKey = renderParams.beanName + renderParams.fieldName + '.' + currentValue
     			labelParams.label = '' // clear what is there
+    			labelParams.fieldId = attrs['id'] // so "for" is correct
     			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
     			    renderParams.beanName, renderParams.fieldName)
-    			labelParams.label = getLabelForField( label, labelKey, renderParams.fieldName)
+    			println "Radio label render label fn is [${renderParams.fieldName}]"
+    			labelParams.label = getLabelForField( labelParams.label, labelParams.labelKey, renderParams.fieldName)
+    			println "Radio label label string is [${labelParams.label}]"
     			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
+    			println "Radio label resulting label is [${label}]"
 
     			def r = g.radio( attrs)
 
@@ -861,15 +865,18 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
         if (attrs.noLabel != null) {
             useLabel = !attrs.remove('noLabel').toString().toBoolean()
         }
+
 		def label
+        def labelClass
 	    def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
 		    beanName, origPropPath)
-
-        def labelClass
 		if (useLabel) {
 			label = getLabelForField( label, labelKey, origPropPath)
 			labelClass = attrs.remove('labelClass') ?: tagInfo.LABEL_CLASS
 		} 
+		
+		println "Label is: [${label}] which is a [${label.class}]"
+		println "Label prop path is: [${origPropPath}] which is a [${origPropPath.class}]"
 		
 
 		def hasFieldErrors = false
@@ -1052,7 +1059,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			label = getMessage(labelKey, false)
 		}
 		if (label == null) {
-			label = GrailsClassUtils.getNaturalName(fieldName)
+			label = (fieldName.tokenize('.').collect { GrailsClassUtils.getNaturalName(it) }).join(' ')
 		}
 		return label
 	}
