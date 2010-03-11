@@ -189,6 +189,10 @@ class BeanTagLib {
 		}
     }
 
+    def maxAutoRadioButtons = { attrs, body -> 
+        setParam('MAX_AUTO_RADIO_BUTTONS', body())
+    }
+    
     /**
      * Set the template for labels
      */
