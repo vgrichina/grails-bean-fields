@@ -524,8 +524,6 @@ class BeanTagLib {
 		doTag( attrs, { renderParams ->
 			def from = overrideFrom
 
-            println "In select, label is [${renderParams.label}]"
-            
             def fldname = renderParams.fieldName
             
             def checkValue = renderParams.fieldValue
@@ -559,9 +557,7 @@ class BeanTagLib {
 	        }
 
 			// Do label
-            println "In select, creating label, label is [${renderParams.label}]"
 			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
-            println "In select, after creating label, label is [${label}]"
 
             if (!renderParams.mandatoryFieldFlagToUse) {
                 attrs.noSelection = noSel
@@ -576,7 +572,6 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-            println "In select, before calling select tempate, label is [${label}]"
 			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label, field:select,
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
@@ -709,11 +704,8 @@ class BeanTagLib {
     			labelParams.fieldId = attrs['id'] // so "for" is correct
     			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
     			    renderParams.beanName, renderParams.fieldName)
-    			println "Radio label render label fn is [${renderParams.fieldName}]"
     			labelParams.label = getLabelForField( labelParams.label, labelParams.labelKey, renderParams.fieldName)
-    			println "Radio label label string is [${labelParams.label}]"
     			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
-    			println "Radio label resulting label is [${label}]"
 
     			def r = g.radio( attrs)
 
@@ -874,9 +866,6 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			label = getLabelForField( label, labelKey, origPropPath)
 			labelClass = attrs.remove('labelClass') ?: tagInfo.LABEL_CLASS
 		} 
-		
-		println "Label is: [${label}] which is a [${label.class}]"
-		println "Label prop path is: [${origPropPath}] which is a [${origPropPath.class}]"
 		
 
 		def hasFieldErrors = false
