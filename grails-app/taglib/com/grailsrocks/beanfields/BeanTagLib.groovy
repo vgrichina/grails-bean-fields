@@ -138,6 +138,8 @@ class BeanTagLib {
 
 	static final String BEAN_PARAMS = '_bean_taglib_params'
 
+    static final SUBSCRIPT_PATTERN = /(\w+)\[(\d+)\]/
+    
     static final Closure DEFAULT_FIELD_RENDERING = { args -> 
 	    def sb = new StringBuilder()
 	    sb <<= "${args.label}"
@@ -357,7 +359,6 @@ class BeanTagLib {
 		def tagInfo = tagParams
 
 		def originalPropertyPath = attrs.remove("property")
-		def fieldName = originalPropertyPath
 
 		def beanName = attrs.remove("beanName")
 
@@ -368,11 +369,9 @@ class BeanTagLib {
 		// Get the bean so we can get the current value and check for errors
 		def bean = pageScope.variables[beanName]
 
-		def resolvedBeanInfo = getActualBeanAndProperty(bean, fieldName)
-		bean = resolvedBeanInfo[0]
-		fieldName = resolvedBeanInfo[1]
+		def resolvedBeanInfo = getActualBeanAndProperty(bean, originalPropertyPath)
 
-		if (isFieldMandatory(bean, fieldName)) {
+		if (isFieldMandatory(resolvedBeanInfo.bean, resolvedBeanInfo.propertyName)) {
 			if (mandatoryFieldIndicator) { 
 				out << mandatoryFieldIndicator
 			} else {
@@ -419,8 +418,8 @@ class BeanTagLib {
     def field = { attrs ->
         def tagInfo = tagParams
         resolveBeanAndProperty(attrs)
-        def fieldName = attrs._BEAN.fieldName
-        def propertyType = attrs._BEAN.bean.metaClass.getMetaProperty(fieldName).type
+        def propName = attrs._BEAN.propertyName // get the terminating property name minus any subscript!
+        def propertyType = attrs._BEAN.bean.metaClass.getMetaProperty(propName).type
 	    
 	    def isDomainClass = grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, propertyType)
 	    
@@ -429,7 +428,7 @@ class BeanTagLib {
 	    } else {
             def tagName = 'input'
 
-            def constraints = attrs._BEAN.constraints?.get(fieldName)
+            def constraints = attrs._BEAN.constraints?.get(propName)
             def inList = constraints?.inList
             
             if (Date.isAssignableFrom(propertyType)) {
@@ -703,11 +702,11 @@ class BeanTagLib {
     			// Do label per field based on value
     			def labelParams = new HashMap(renderParams)
      			labelParams.fieldName = attrs['id']
-    			labelParams.labelKey = renderParams.beanName + renderParams.fieldName + '.' + currentValue
+    			labelParams.labelKey = renderParams.beanName + renderParams.propertyName + '.' + currentValue
     			labelParams.label = '' // clear what is there
     			labelParams.fieldId = attrs['id'] // so "for" is correct
     			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
-    			    renderParams.beanName, renderParams.fieldName)
+    			    renderParams.beanName, renderParams.propertyPath)
     			labelParams.label = getLabelForField( labelParams.label, labelParams.labelKey, renderParams.fieldName)
     			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
 
@@ -799,7 +798,7 @@ class BeanTagLib {
         
         // Resolve the property name and beanName
 		attrs._BEAN.originalPropertyPath = attrs.remove("property")
-		attrs._BEAN.fieldName = attrs._BEAN.originalPropertyPath
+		attrs._BEAN.propertyName = attrs._BEAN.originalPropertyPath
 		// Use field name as id if none supplied
 		if (attrs['id'] == null) {
 			attrs['id'] = attrs._BEAN.originalPropertyPath
@@ -814,9 +813,8 @@ class BeanTagLib {
 		attrs._BEAN.bean = pageScope.variables[attrs._BEAN.beanName]
 
 		if (attrs._BEAN.bean) {
-    		def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.fieldName)
-			attrs._BEAN.bean = resolvedBeanInfo[0]
-			attrs._BEAN.fieldName = resolvedBeanInfo[1]
+    		def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.propertyName)
+    		attrs._BEAN.putAll(resolvedBeanInfo)
             attrs._BEAN.constraints = getBeanConstraints(attrs._BEAN.bean)
 		}        
     }
@@ -826,15 +824,17 @@ class BeanTagLib {
 
 		def tagInfo = tagParams
 
-		def bean = attrs._BEAN.bean
-        def beanName = attrs._BEAN.beanName
-        def fieldName = attrs._BEAN.fieldName
-
+        // Get the pre-resolved info for this bean and property
+		def bean = attrs._BEAN.bean // the endpoint bean, not the original root level one!
+        def beanName = attrs._BEAN.beanName // the name of the originbal root level bean
+        def propertyName = attrs._BEAN.propertyName
+        def beanPropertyValue = attrs._BEAN.value
+        
         if (bean == null)
             throwTagError("""All model tags require attribute [beanName] to resolve to a bean
 in the model, but it is null. beanName was [${beanName}] and property was [${attrs._BEAN.originalPropertyPath}]""")
 
-        // Now we have the bean and fieldName we can get one with things
+        // Now we have the bean and property Name we can get one with things
         
 		def showErrors = attrs.remove("showErrors")?.toBoolean()
 		if (showErrors == null) {
@@ -853,9 +853,8 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			useValue = Boolean.valueOf(useValueCondition)
 		}
 
-        def origPropPath = attrs._BEAN.originalPropertyPath
-        def constraints = attrs._BEAN.constraints
-        
+        def cleanPropertyPath = attrs._BEAN.propertyPath
+        def originalPropertyPath = attrs._BEAN.originalPropertyPath
 
         def useLabel = true
         if (attrs.noLabel != null) {
@@ -864,24 +863,22 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 
 		def label
         def labelClass
-	    def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
-		    beanName, origPropPath)
+	    def labelKey = getLabelKeyForField(attrs.remove("labelKey"), beanName, cleanPropertyPath)
 		if (useLabel) {
-			label = getLabelForField( label, labelKey, origPropPath)
+			label = getLabelForField( label, labelKey, originalPropertyPath)
 			labelClass = attrs.remove('labelClass') ?: tagInfo.LABEL_CLASS
 		} 
-		
 
 		def hasFieldErrors = false
 		def errorClassToUse = ""
 		def mandatoryFieldFlagToUse = ""
 
-		if (doesFieldHaveErrors(bean, fieldName)) {
+		if (doesFieldHaveErrors(bean, propertyName)) {
 			hasFieldErrors = true
 			errorClassToUse = tagInfo.ERROR_CLASS
 		}
 
-		if (isFieldMandatory(bean, fieldName)) {
+		if (isFieldMandatory(bean, propertyName)) {
 			if (mandatoryFieldIndicator != null) {
 				mandatoryFieldFlagToUse = mandatoryFieldIndicator
 			} else {
@@ -894,7 +891,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		// If there are errors or the value is to be used (see useValueCondition), set it up
 		if (hasFieldErrors || modelHasErrors() || useValue) {
 			if (overrideValue == null) {
-				fieldValue = getFieldValue(bean, fieldName)
+				fieldValue = beanPropertyValue
 				if ((fieldValue == null) && defaultValue) {
 					fieldValue = defaultValue
 				} else if (fieldValue == null) {
@@ -904,6 +901,8 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 				fieldValue = overrideValue
 			}
 		}
+		
+        def constraints = attrs._BEAN.constraints
 
 		// Get the optional args we do not need so we can echo 'as is'
 		attrs.remove('_BEAN')
@@ -915,19 +914,20 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		def renderParams = [
 			"errorClassToUse":errorClassToUse,
 			"required":mandatoryFieldFlagToUse,
-			"fieldName":origPropPath,
+			"fieldName":originalPropertyPath, // original full dotted and subscripted path
             "label":label,
-            "fieldValue":fieldValue,
+            "fieldValue":fieldValue, 
             "fieldId":attrs.id,
             "defaultValue":defaultValue,
 			"varArgs":varArgs,
-			"bean":bean,
+			"bean":bean, // The endpoint bean 
 			"beanConstraints":constraints,
 			"beanName":beanName,
-			"propertyName":fieldName,
+			"propertyName":propertyName,  // Final endpoint bean's property name without subscripts
+			"propertyPath":cleanPropertyPath,  // Full dotted but non-subscripted property path
 			"labelKey":labelKey,
 			"labelClass":labelClass,
-			"errors": showErrors ? (bean?.metaClass?.hasProperty(bean, 'errors') ? bean?.errors?.getFieldErrors(fieldName) : null) : null
+			"errors": showErrors ? (bean?.metaClass?.hasProperty(bean, 'errors') ? bean?.errors?.getFieldErrors(propertyName) : null) : null
 		]
 
 		renderPart(renderParams)
@@ -964,7 +964,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
                 }
                 
 		        // Safety check for the case where bean is no a proper domain/command object
-		        // This avoids confusing errors where constraints comes back as a Closuret
+		        // This avoids confusing errors where constraints comes back as a Closure
 		        if (!(cons instanceof Map)) {
     	            if (log.warnEnabled) {
 		                log.warn "Bean of type ${bean.class} is not a domain class, command object or other validateable object - the constraints property was a [${cons.class}]"
@@ -982,27 +982,54 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	/**
 	  * Get the actual bean and property name to use, following property path
 	  *
-	  * fieldName can be a simple fieldName (e.g. 'bookName') or compound (e.g. 'author.email').
+	  * fieldName can be a simple fieldName (e.g. 'bookName') or compound (e.g. 'author.email') or 'book.authors[2].email'
 	  */
-	 def getActualBeanAndProperty = {bean, propertyPath ->
+	 def getActualBeanAndProperty(bean, propertyPath) {
+      	
+      	// The final endpoint bean
       	def actual = bean
-		def propName = propertyPath
-      	if(propName.indexOf('.')) {
-        	def parts = propName.tokenize('.')
-			(parts.size()-1).times() { index ->
-      			actual = actual[parts[index]]
-      		}
-			propName = parts[parts.size()-1]
-      	}
-      	return [actual, propName]
-	}
-	/**
-	  * Get the current value for a given field name on a bean.
-	  *
-	  * fieldName can be a simple fieldName (e.g. 'bookName') or compound (e.g. 'author.email').
-	  */
-	 def getFieldValue = {bean, fieldName ->
-      	return bean[fieldName]
+		
+		// The final endpoint bean's property name, excluding the subscript if any
+		def propName
+
+        // The final property value indicated by the full original property path
+		def value
+		
+		// Split the property path eg x.y[4].authors[3].email into the component parts
+    	def parts = propertyPath.tokenize('.')
+    	def last = parts.size()-1
+    	
+    	// Stores the property names in the path, without subscripts (for label keys)
+    	def propPath = []
+    	
+    	// Loop over the parts of the property path and resolve the actual final object to get property from
+    	parts.eachWithIndex { pn, idx ->
+		    def subscriptMatch = (pn =~ SUBSCRIPT_PATTERN) 
+		    // If theere was a subscript operator, dereference it
+		    if (subscriptMatch) {
+                def nameWithNoSubscript = subscriptMatch[0][1]
+        	    if (idx < last) {
+		            actual = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+	            } else {
+		            value = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+    	            propName = nameWithNoSubscript
+	            }
+	            propPath << nameWithNoSubscript
+		    } else {
+        	    if (idx < last) {
+  			        actual = actual[pn]
+		        } else {
+		            value = actual[pn]
+    	            propName = pn
+		        }
+	            propPath << pn
+			}
+    	    if (idx == last) {
+	        }
+	    }
+  		// Update our final bean's property name
+
+      	return [bean:actual, propertyName:propName, value:value, propertyPath: propPath.join('.')]
 	}
 
     def buildErrors(def template, def errors) {
@@ -1030,9 +1057,9 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
         return message
     }
 
-	def getLabelKeyForField = { labelKey, beanName, fieldName -> 
+	def getLabelKeyForField = { labelKey, beanName, propertyName -> 
 		if (!labelKey) {
-			labelKey = beanName + "." + fieldName
+			labelKey = beanName + "." + propertyName
 		}
 		return labelKey
     }
@@ -1046,13 +1073,20 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	 *     as the key for an 118N'd message
 	 *   - if still null use the convention of <Field Name>
 	*/
-	def getLabelForField = { label, labelKey, fieldName ->
+	def getLabelForField = { label, labelKey, propPath ->
 	    // deliberately check for null - label = '' means "no label thanks!"
 		if (label == null) { 
 			label = getMessage(labelKey, false)
 		}
 		if (label == null) {
-			label = (fieldName.tokenize('.').collect { GrailsClassUtils.getNaturalName(it) }).join(' ')
+			label = (propPath.tokenize('.').collect { pn ->
+    		    def subscriptMatch = (pn =~ SUBSCRIPT_PATTERN) 
+			    if (subscriptMatch) {
+			        return GrailsClassUtils.getNaturalName(subscriptMatch[0][1])+' '+subscriptMatch[0][2]
+			    } else {
+			        return GrailsClassUtils.getNaturalName(pn)
+		        }
+		    }).join(' ')
 		}
 		return label
 	}
@@ -1072,11 +1106,6 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		}
 		return attributeToUse
 	 }
-
-	private getModelBeanProperty(propertyPath) {
-		def info = getActualBeanAndProperty(request, propertyPath)
-		return info[0][info[1]]
-	}
 
 	/**
 	 * Check if there were any objects in the model with errors

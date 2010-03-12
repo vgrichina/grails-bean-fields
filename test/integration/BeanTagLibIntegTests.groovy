@@ -18,6 +18,8 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         def result = applyTemplate(t, [bean1:[field1:'value1']])
         
         assertTrue result.indexOf("TEST: ") > 0
+        assertTrue result.indexOf('input') > 0
+        assertTrue result.indexOf('type="text"') > 0
         assertTrue result.indexOf('name="field1"') > 0
     }
 
@@ -29,11 +31,68 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         def result = applyTemplate(t, [bean1:[field1:'value1']])
 
         println "Result: ${result}"
-        assertTrue result.indexOf('<label for="field1" class=" ">Field1') > 0
+        assertTrue result.indexOf('<label for="field1" class=" ">Field1<') > 0
+        assertTrue result.indexOf('input') > 0
+        assertTrue result.indexOf('type="text"') > 0
         assertTrue result.indexOf('name="field1"') > 0
         assertTrue result.indexOf('value="value1"') > 0
     }
     
+    void testSubscriptRootProperty() {
+        def t = """
+<bean:input beanName="bean1" property="items[0]"/>
+"""
+        def result = applyTemplate(t, [bean1:new ListPropertyTester(items:['valueX', 'valueY'])])
+
+        println "Result: ${result}"
+        assertTrue result.indexOf('<label for="items[0]" class=" ">Items 0<') > 0
+        assertTrue result.indexOf('name="items[0]"') > 0
+        assertTrue result.indexOf('value="valueX"') > 0
+    }
+            
+    void testSubscriptNestedProperty() {
+        def t = """
+<bean:input beanName="bean1" property="items[0].name"/>
+"""
+        def result = applyTemplate(t, [bean1:new ListPropertyTester(items:[ [name:'valueP'], [name:'valueQ'] ])])
+
+        println "Result: ${result}"
+        assertTrue result.indexOf('<label for="items[0].name" class=" ">Items 0 Name<') > 0
+        assertTrue result.indexOf('name="items[0].name"') > 0
+        assertTrue result.indexOf('value="valueP"') > 0
+    }
+
+    void testChainedSubscriptNestedProperty() {
+        def t = """
+<bean:input beanName="bean1" property="items[0].products[1].name"/>
+"""
+        def result = applyTemplate(t, [bean1:new ListPropertyTester(items:[ 
+                [products: [ [name:'product0_0'], [name:'product0_1'], [name:'product0_2'] ] ],
+                [products: [ [name:'product1_0'], [name:'product1_1'], [name:'product1_2'] ] ]
+            ])
+        ])
+
+        println "Result: ${result}"
+        assertTrue result.indexOf('<label for="items[0].products[1].name" class=" ">Items 0 Products 1 Name<') > 0
+        assertTrue result.indexOf('name="items[0].products[1].name"') > 0
+        assertTrue result.indexOf('value="product0_1"') > 0
+    }
+
+    void testLabelKeyDoesNotContainArraySubscripts() {
+        def t = """
+<bean:inputTemplate>\${field} labelKey: [\${labelKey}]</bean:inputTemplate>
+<bean:input beanName="bean1" property="items[3]"/>
+"""
+        def result = applyTemplate(t, [bean1:new ListPropertyTester(items:[1,2,3,4])])
+
+        println "Result: ${result}"
+
+        assertTrue result.indexOf("[bean1.items]") > 0
+        assertTrue result.indexOf('input') > 0
+        assertTrue result.indexOf('type="text"') > 0
+        assertTrue result.indexOf('name="items[3]"') > 0
+    }
+
     void testAutoFieldForDate() {
         def t = """
 <bean:field beanName="bean1" property="datefield"/>
@@ -244,7 +303,6 @@ class MyPerson {
   
   MyAddress shippingAddress
   
-  static embedded = ['shippingAddress']
   static constraints = {
     shippingAddress(required:true, nullable:false)
     title(blank:false, inList:["Mr.", "Mrs."])
@@ -254,14 +312,19 @@ class MyPerson {
 @org.codehaus.groovy.grails.validation.Validateable
 class MyAddress {
   
-  static belongsTo = [MyPerson]
-  
   String country, street
   Boolean billing
   
   static constraints = {
     country(inList:["US","UK"])
   }
+}
+
+@org.codehaus.groovy.grails.validation.Validateable
+class ListPropertyTester {
+  
+  String title
+  List items
 }
 
 class TestBean {
