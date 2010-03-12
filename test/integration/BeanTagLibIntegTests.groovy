@@ -38,6 +38,20 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         assertTrue result.indexOf('value="value1"') > 0
     }
     
+    void testInputFieldCustonLabel() {
+        def t = """
+<bean:input beanName="bean1" property="field1" label="I don't do i18n"/>
+"""
+        def result = applyTemplate(t, [bean1:[field1:'value1']])
+
+        println "Result: ${result}"
+        assertTrue result.indexOf('<label for="field1" class=" ">I don\'t do i18n<') > 0
+        assertTrue result.indexOf('input') > 0
+        assertTrue result.indexOf('type="text"') > 0
+        assertTrue result.indexOf('name="field1"') > 0
+        assertTrue result.indexOf('value="value1"') > 0
+    }
+        
     void testSubscriptRootProperty() {
         def t = """
 <bean:input beanName="bean1" property="items[0]"/>
@@ -201,7 +215,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
       grails.test.MockUtils.prepareForConstraintsTests(MyPerson, [:], [p])
       grails.test.MockUtils.prepareForConstraintsTests(MyAddress, [:], [p.shippingAddress])
 
-      def expected ="""<label for="title_0" class=" ">*</label><input type="radio" name="title" value="Mr." id="title_0"  /><br/><label for="title_1" class=" ">*</label><input type="radio" name="title" value="Mrs." id="title_1"  /><br/>"""
+      def expected ="""<label for="title_0" class=" ">Mr.*</label><input type="radio" name="title" value="Mr." id="title_0"  /><br/><label for="title_1" class=" ">Mrs.*</label><input type="radio" name="title" value="Mrs." id="title_1"  /><br/>"""
 
       def template = '<bean:field beanName="personInstance" property="title"/>'
       def result = applyTemplate( template, [personInstance: p] )
@@ -260,7 +274,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country_0" class=" ">*</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">*</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
+        def expected = """<label for="shippingAddress.country_0" class=" ">US*</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">UK*</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
 
         assertEquals expected.normalize(), result.normalize()
       }

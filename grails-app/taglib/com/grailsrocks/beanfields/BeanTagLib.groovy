@@ -703,11 +703,12 @@ class BeanTagLib {
     			def labelParams = new HashMap(renderParams)
      			labelParams.fieldName = attrs['id']
     			labelParams.labelKey = renderParams.beanName + renderParams.propertyName + '.' + currentValue
-    			labelParams.label = '' // clear what is there
+    			labelParams.label = null // Cancel label override, it makes no sense for multiple radio buttons
     			labelParams.fieldId = attrs['id'] // so "for" is correct
     			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
     			    renderParams.beanName, renderParams.propertyPath)
-    			labelParams.label = getLabelForField( labelParams.label, labelParams.labelKey, renderParams.fieldName)
+    			// Get label using INLIST CONSTRAINT CURRENT VALUE as the fallback label
+    			labelParams.label = getLabelForField( currentValue, labelParams.labelKey, renderParams.propertyPath)
     			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
 
     			def r = g.radio( attrs)
@@ -861,7 +862,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
             useLabel = !attrs.remove('noLabel').toString().toBoolean()
         }
 
-		def label
+		def label = attrs.remove('label')
         def labelClass
 	    def labelKey = getLabelKeyForField(attrs.remove("labelKey"), beanName, cleanPropertyPath)
 		if (useLabel) {
