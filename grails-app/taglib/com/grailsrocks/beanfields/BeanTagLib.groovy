@@ -192,7 +192,7 @@ class BeanTagLib {
     }
 
     def maxAutoRadioButtons = { attrs, body -> 
-        setParam('MAX_AUTO_RADIO_BUTTONS', body())
+        setParam('MAX_AUTO_RADIO_BUTTONS', body().toString().toInteger())
     }
     
     /**
