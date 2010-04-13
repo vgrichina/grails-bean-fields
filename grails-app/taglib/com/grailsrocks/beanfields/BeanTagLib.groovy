@@ -419,9 +419,19 @@ class BeanTagLib {
         def tagInfo = tagParams
         resolveBeanAndProperty(attrs)
         def propName = attrs._BEAN.propertyName // get the terminating property name minus any subscript!
-        def propertyType = attrs._BEAN.bean.metaClass.getMetaProperty(propName).type
-	    
-	    def isDomainClass = grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, propertyType)
+        def domainArtefact = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, attrs._BEAN.bean.class.name)
+        def propertyType
+	    def isDomainClass
+	    // Use GrailsDomainClass persistent properties to find out if this is an association,
+	    // as beans might be proxies with property type Object for association columns, which breaks our logic
+        if (domainArtefact) {
+            def persistentProp = domainArtefact.getPropertyByName(propName)
+            propertyType = persistentProp.type
+    	    isDomainClass = persistentProp.association
+        } else {
+            propertyType = attrs._BEAN.bean.metaClass.getMetaProperty(propName).type
+    	    isDomainClass = grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, propertyType)
+        }
 	    
 	    if (isDomainClass) {
 	        out << select( attrs )
