@@ -137,6 +137,7 @@ class BeanTagLib {
     static namespace = 'bean'
 
 	static final String BEAN_PARAMS = '_bean_taglib_params'
+	static final String BEAN_TEMPLATES_BACKUP = '_bean_taglib_templates_backup'
 
     static final SUBSCRIPT_PATTERN = /(\w+)\[(\d+)\]/
     
@@ -189,6 +190,21 @@ class BeanTagLib {
 			}
 			return tagSettings
 		}
+    }
+
+    def backupTemplates = { attrs -> 
+        def backup = [:]
+        request[BEAN_TEMPLATES_BACKUP] = backup
+        tagParams.each { k, v ->
+            if (k.endsWith('_TEMPLATE')) {
+                backup[k] = v
+            }
+        }
+    }
+    
+    def restoreTemplates = { attrs -> 
+        tagParams.putAll(request[BEAN_TEMPLATES_BACKUP])
+        request.remove(BEAN_TEMPLATES_BACKUP)
     }
 
     def maxAutoRadioButtons = { attrs, body -> 
@@ -325,7 +341,7 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			// Use the current template closure if set
+			// Use the current template closure if setParam
 			out << tagInfo.CUSTOM_TEMPLATE.clone().call(label:label, field:body(),
 				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
 			    bean: renderParams.bean,
@@ -711,14 +727,16 @@ class BeanTagLib {
 
     			// Do label per field based on value
     			def labelParams = new HashMap(renderParams)
+    			labelParams.required = '' 
      			labelParams.fieldName = attrs['id']
-    			labelParams.labelKey = renderParams.beanName + renderParams.propertyName + '.' + currentValue
+    			labelParams.labelKey = renderParams.beanName + '.' + renderParams.propertyName + '.' + currentValue
     			labelParams.label = null // Cancel label override, it makes no sense for multiple radio buttons
     			labelParams.fieldId = attrs['id'] // so "for" is correct
     			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
     			    renderParams.beanName, renderParams.propertyPath)
     			// Get label using INLIST CONSTRAINT CURRENT VALUE as the fallback label
-    			labelParams.label = getLabelForField( currentValue, labelParams.labelKey, renderParams.propertyPath)
+    			// Pass null as current label as this is per-field labelling which requires the value as part of the key
+    			labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath)
     			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
 
     			def r = g.radio( attrs)
@@ -727,7 +745,7 @@ class BeanTagLib {
 
     			// Use the current template closure if set
 				out << tagInfo.RADIOGROUP_TEMPLATE.clone().call(label:label, field:r,
-					required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+					required:'', errors: errors,
     			    bean: renderParams.bean,
     			    beanName: renderParams.beanName,
     			    labelKey: renderParams.labelKey,
@@ -821,7 +839,14 @@ class BeanTagLib {
 	    assertBeanName(attrs._BEAN.beanName)
 
 		// Get the root bean so we can get the current value and check for errors
-		attrs._BEAN.bean = pageScope.variables[attrs._BEAN.beanName]
+		// The user can override with bean="${whatever}" if they really know what they are doing
+		attrs._BEAN.bean = attrs.bean ?: pageScope.variables[attrs._BEAN.beanName]
+		
+		// If still not resolved to an instance, see if we can create it
+	    def cls = attrs.remove('className')
+		if (!attrs._BEAN.bean && cls) {
+		    attrs._BEAN.bean = ApplicationHolder.application.classLoader.loadClass(cls).newInstance()
+		}
 
 		if (attrs._BEAN.bean) {
     		def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.propertyName)
@@ -853,6 +878,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		}
 		def mandatoryFieldIndicator = attrs.remove("requiredField")
 		
+		def nameOverride = attrs.remove("nameOverride")
 
 		def overrideValue = attrs.remove("value")
 		def defaultValue = attrs.remove("default")
@@ -925,7 +951,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		def renderParams = [
 			"errorClassToUse":errorClassToUse,
 			"required":mandatoryFieldFlagToUse,
-			"fieldName":originalPropertyPath, // original full dotted and subscripted path
+			"fieldName":nameOverride ?: originalPropertyPath, // original full dotted and subscripted path
             "label":label,
             "fieldValue":fieldValue, 
             "fieldId":attrs.id,

@@ -215,7 +215,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
       grails.test.MockUtils.prepareForConstraintsTests(MyPerson, [:], [p])
       grails.test.MockUtils.prepareForConstraintsTests(MyAddress, [:], [p.shippingAddress])
 
-      def expected ="""<label for="title_0" class=" ">Mr.*</label><input type="radio" name="title" value="Mr." id="title_0"  /><br/><label for="title_1" class=" ">Mrs.*</label><input type="radio" name="title" value="Mrs." id="title_1"  /><br/>"""
+      def expected ="""<label for="title_0" class=" ">Mister</label><input type="radio" name="title" value="Mr." id="title_0"  /><br/><label for="title_1" class=" ">Misses</label><input type="radio" name="title" value="Mrs." id="title_1"  /><br/>"""
 
       def template = '<bean:field beanName="personInstance" property="title"/>'
       def result = applyTemplate( template, [personInstance: p] )
@@ -274,7 +274,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country_0" class=" ">US*</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">UK*</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
+        def expected = """<label for="shippingAddress.country_0" class=" ">U.S.A.</label><input type="radio" name="shippingAddress.country" value="" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">United Kingdom*</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
 
         assertEquals expected.normalize(), result.normalize()
       }
