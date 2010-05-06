@@ -387,7 +387,7 @@ class BeanTagLib {
 
 		def resolvedBeanInfo = getActualBeanAndProperty(bean, originalPropertyPath)
 
-		if (isFieldMandatory(resolvedBeanInfo.bean, resolvedBeanInfo.propertyName)) {
+		if (isFieldMandatory(resolvedBeanInfo.bean, resolvedBeanInfo.propertyName, attrs.constraints)) {
 			if (mandatoryFieldIndicator) { 
 				out << mandatoryFieldIndicator
 			} else {
@@ -459,6 +459,10 @@ class BeanTagLib {
             
             if (Date.isAssignableFrom(propertyType)) {
                 tagName = 'date'
+            } else if (Number.isAssignableFrom(propertyType)) {
+                if (!attrs['size']) {
+                    attrs['size'] = 10
+                }
             } else if (inList) {
                 tagName = (inList.size < tagInfo.MAX_AUTO_RADIO_BUTTONS) ? 'radioGroup' : 'select'
             } else if (Boolean.isAssignableFrom(propertyType)) {
@@ -719,27 +723,28 @@ class BeanTagLib {
 
             renderParams.beanConstraints?.get(renderParams.propertyName).inList?.eachWithIndex() { currentValue, idx ->
 
+                def tempAttrs = [:] + attrs
     			// Defer to form taglib
-    			attrs['name'] = renderParams.fieldName
-    			attrs['id'] = renderParams.fieldName + "_" + idx
-    			attrs['value'] = currentValue
-    			attrs['checked'] = renderParams.fieldValue == currentValue
+    			tempAttrs['name'] = renderParams.fieldName
+    			tempAttrs['id'] = renderParams.fieldName + "_" + idx
+    			tempAttrs['value'] = currentValue
+    			tempAttrs['checked'] = renderParams.fieldValue == currentValue
 
     			// Do label per field based on value
     			def labelParams = new HashMap(renderParams)
     			labelParams.required = '' 
-     			labelParams.fieldName = attrs['id']
-    			labelParams.labelKey = renderParams.beanName + '.' + renderParams.propertyName + '.' + currentValue
+     			labelParams.fieldName = tempAttrs['id']
+    			labelParams.labelKey = renderParams.beanName + '.' + renderParams.propertyPath + '.' + currentValue
     			labelParams.label = null // Cancel label override, it makes no sense for multiple radio buttons
-    			labelParams.fieldId = attrs['id'] // so "for" is correct
-    			def labelKey = getLabelKeyForField(attrs.remove("labelKey"), 
+    			labelParams.fieldId = tempAttrs['id'] // so "for" is correct
+    			def labelKey = getLabelKeyForField(tempAttrs.remove("labelKey"), 
     			    renderParams.beanName, renderParams.propertyPath)
     			// Get label using INLIST CONSTRAINT CURRENT VALUE as the fallback label
     			// Pass null as current label as this is per-field labelling which requires the value as part of the key
-    			labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath)
-    			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(labelParams) : ''
+    			labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath + '.' + currentValue)
+    			def label = tagInfo.LABEL_TEMPLATE.clone().call(labelParams)
 
-    			def r = g.radio( attrs)
+    			def r = g.radio( tempAttrs)
 
     			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
@@ -840,7 +845,7 @@ class BeanTagLib {
 
 		// Get the root bean so we can get the current value and check for errors
 		// The user can override with bean="${whatever}" if they really know what they are doing
-		attrs._BEAN.bean = attrs.bean ?: pageScope.variables[attrs._BEAN.beanName]
+		attrs._BEAN.bean = attrs.remove('bean') ?: pageScope.variables[attrs._BEAN.beanName]
 		
 		// If still not resolved to an instance, see if we can create it
 	    def cls = attrs.remove('className')
@@ -851,7 +856,7 @@ class BeanTagLib {
 		if (attrs._BEAN.bean) {
     		def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.propertyName)
     		attrs._BEAN.putAll(resolvedBeanInfo)
-            attrs._BEAN.constraints = getBeanConstraints(attrs._BEAN.bean)
+            attrs._BEAN.constraints = attrs.remove('constraints') ?: getBeanConstraints(attrs._BEAN.bean)
 		}        
     }
     
@@ -882,7 +887,8 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 
 		def overrideValue = attrs.remove("value")
 		def defaultValue = attrs.remove("default")
-
+        def overrideConstraints = attrs.remove('constraints')
+        
 		def useValueCondition = getAttribute(attrs, "useValue", null)
 
 		def useValue = true
@@ -915,7 +921,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			errorClassToUse = tagInfo.ERROR_CLASS
 		}
 
-		if (isFieldMandatory(bean, propertyName)) {
+		if (isFieldMandatory(bean, propertyName, overrideConstraints)) {
 			if (mandatoryFieldIndicator != null) {
 				mandatoryFieldFlagToUse = mandatoryFieldIndicator
 			} else {
@@ -979,11 +985,11 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	/**
 	  * See if the field is mandatory
 	  */
-	private def isFieldMandatory = {bean, fieldName ->
+	private def isFieldMandatory = {bean, fieldName, constraints ->
     	def fieldIsMandatory = false
 
 		// Watch out for Groovy bug here, don't combine lines
-		def beanConstraints = getBeanConstraints(bean)
+		def beanConstraints = constraints ?: getBeanConstraints(bean)
 		if (beanConstraints) {
 	        fieldIsMandatory |= !(beanConstraints[fieldName]?.nullable)
 	        fieldIsMandatory |= !(beanConstraints[fieldName]?.blank)

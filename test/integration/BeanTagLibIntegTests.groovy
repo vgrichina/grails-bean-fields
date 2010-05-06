@@ -252,7 +252,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country" class=" ">Shipping Address Country*</label><select name="shippingAddress.country" id="shippingAddress.country" >
+        def expected = """<label for="shippingAddress.country" class=" ">Your country*</label><select name="shippingAddress.country" id="shippingAddress.country" >
 <option value="US" >US</option>
 <option value="UK" >UK</option>
 </select><br/>"""
@@ -274,7 +274,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country_0" class=" ">U.S.A.</label><input type="radio" name="shippingAddress.country" value="" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">United Kingdom*</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
+        def expected = """<label for="shippingAddress.country_0" class=" ">U.S.A.</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">United Kingdom</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
 
         assertEquals expected.normalize(), result.normalize()
       }
