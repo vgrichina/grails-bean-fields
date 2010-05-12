@@ -883,7 +883,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		}
 		def mandatoryFieldIndicator = attrs.remove("requiredField")
 		
-		def nameOverride = attrs.remove("nameOverride")
+		def nameOverride = attrs.remove("name")
 
 		def overrideValue = attrs.remove("value")
 		def defaultValue = attrs.remove("default")
