@@ -193,6 +193,10 @@ class BeanTagLib {
     }
 
     def backupTemplates = { attrs -> 
+        if (request[BEAN_TEMPLATES_BACKUP]) {
+            throw new IllegalStateException('Cannot backup templates, they have not been restored yet and we do do not support nested backups sorry!')
+        }
+        
         def backup = [:]
         request[BEAN_TEMPLATES_BACKUP] = backup
         tagParams.each { k, v ->
@@ -203,8 +207,10 @@ class BeanTagLib {
     }
     
     def restoreTemplates = { attrs -> 
-        tagParams.putAll(request[BEAN_TEMPLATES_BACKUP])
-        request.remove(BEAN_TEMPLATES_BACKUP)
+        if (request[BEAN_TEMPLATES_BACKUP]) {
+            tagParams.putAll(request[BEAN_TEMPLATES_BACKUP])
+            request[BEAN_TEMPLATES_BACKUP] = null
+        }
     }
 
     def maxAutoRadioButtons = { attrs, body -> 
@@ -348,6 +354,16 @@ class BeanTagLib {
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
 			    propertyName: renderParams.propertyName)
+		})
+    }
+    
+    /**
+     * Render just the errors for a specific field
+     */
+    def fieldErrors = { attrs, body ->
+        def tagInfo = tagParams
+		doTag( attrs, { renderParams ->
+			out << buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 		})
     }
     
