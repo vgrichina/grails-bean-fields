@@ -401,7 +401,7 @@ class BeanTagLib {
 		// Get the bean so we can get the current value and check for errors
 		def bean = pageScope.variables[beanName]
 
-		def resolvedBeanInfo = getActualBeanAndProperty(bean, originalPropertyPath)
+		def resolvedBeanInfo = getActualBeanAndProperty(bean, attrs.value, originalPropertyPath)
 
 		if (isFieldMandatory(resolvedBeanInfo.bean, resolvedBeanInfo.propertyName, attrs.constraints)) {
 			if (mandatoryFieldIndicator) { 
@@ -862,6 +862,9 @@ class BeanTagLib {
 		// Get the root bean so we can get the current value and check for errors
 		// The user can override with bean="${whatever}" if they really know what they are doing
 		attrs._BEAN.bean = attrs.remove('bean') ?: pageScope.variables[attrs._BEAN.beanName]
+
+        // Get the value override if there is one
+		attrs._BEAN.value = attrs.remove('value')
 		
 		// If still not resolved to an instance, see if we can create it
 	    def cls = attrs.remove('className')
@@ -870,8 +873,11 @@ class BeanTagLib {
 		}
 
 		if (attrs._BEAN.bean) {
-    		def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.propertyName)
-    		attrs._BEAN.putAll(resolvedBeanInfo)
+		    // Only go down the property path if the user did NOT override the value
+		    if (attrs._BEAN.value != null) {
+    		    def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.value, attrs._BEAN.propertyName)
+    		    attrs._BEAN.putAll(resolvedBeanInfo)
+		    }
             attrs._BEAN.constraints = attrs.remove('constraints') ?: getBeanConstraints(attrs._BEAN.bean)
 		}        
     }
@@ -1043,17 +1049,17 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	  *
 	  * fieldName can be a simple fieldName (e.g. 'bookName') or compound (e.g. 'author.email') or 'book.authors[2].email'
 	  */
-	 def getActualBeanAndProperty(bean, propertyPath) {
+	 def getActualBeanAndProperty(bean, valueOverride, propertyPath) {
       	
       	// The final endpoint bean
       	def actual = bean
 		
 		// The final endpoint bean's property name, excluding the subscript if any
 		def propName
-
-        // The final property value indicated by the full original property path
-		def value
-		
+        
+        // The final value
+        def value = valueOverride
+        
 		// Split the property path eg x.y[4].authors[3].email into the component parts
     	def parts = propertyPath.tokenize('.')
     	def last = parts.size()-1
@@ -1068,17 +1074,25 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		    if (subscriptMatch) {
                 def nameWithNoSubscript = subscriptMatch[0][1]
         	    if (idx < last) {
-		            actual = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+                    if (valueOverride == null) {
+		                actual = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+	                }
 	            } else {
-		            value = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+                    if (valueOverride == null) {
+		                value = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+	                }
     	            propName = nameWithNoSubscript
 	            }
 	            propPath << nameWithNoSubscript
 		    } else {
         	    if (idx < last) {
-  			        actual = actual[pn]
+                    if (valueOverride == null) {
+  			            actual = actual[pn]
+		            }
 		        } else {
-		            value = actual[pn]
+                    if (valueOverride == null) {
+		                value = actual[pn]
+	                }
     	            propName = pn
 		        }
 	            propPath << pn
