@@ -149,7 +149,15 @@ class BeanTagLib {
 	    return sb.toString()
 	}
 	
-    static final Closure DEFAULT_LABEL_RENDERING = { args ->
+    static final Closure DEFAULT_RADIOGROUP_RENDERING = { args -> 
+	    def sb = new StringBuilder()
+	    sb <<= "${args.label}"
+	    if (args.errors) sb <<= "<br/><div>${args.errors}</div>"
+	    sb <<= "${args.field}"
+	    return sb.toString()
+	}
+	
+	static final Closure DEFAULT_LABEL_RENDERING = { args ->
         "<label for=\"${args.fieldId}\" class=\"${args.labelClass} ${args.errorClassToUse}\">${args.label.encodeAsHTML()}${args.required}</label>"
     }
 	
@@ -168,7 +176,8 @@ class BeanTagLib {
 		CHECKBOX_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		RADIO_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		COUNTRY_TEMPLATE: DEFAULT_FIELD_RENDERING,
-		RADIOGROUP_TEMPLATE: DEFAULT_FIELD_RENDERING,
+		RADIOGROUP_TEMPLATE: DEFAULT_RADIOGROUP_RENDERING,
+		RADIOLABEL_TEMPLATE: DEFAULT_LABEL_RENDERING,
 		TEXTAREA_TEMPLATE: DEFAULT_FIELD_RENDERING
 	])
 
@@ -264,6 +273,13 @@ class BeanTagLib {
      */
     def radioGroupTemplate = { attrs, body ->
         setParam('RADIOGROUP_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
+    }
+
+    /**
+     * Set the template for radio groups
+     */
+    def radioLabelTemplate = { attrs, body ->
+        setParam('RADIOLABEL_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
@@ -401,7 +417,7 @@ class BeanTagLib {
 		// Get the bean so we can get the current value and check for errors
 		def bean = pageScope.variables[beanName]
 
-		def resolvedBeanInfo = getActualBeanAndProperty(bean, attrs.value, originalPropertyPath)
+		def resolvedBeanInfo = getActualBeanAndProperty(bean, attrs.valueOverride, originalPropertyPath)
 
 		if (isFieldMandatory(resolvedBeanInfo.bean, resolvedBeanInfo.propertyName, attrs.constraints)) {
 			if (mandatoryFieldIndicator) { 
@@ -704,6 +720,7 @@ class BeanTagLib {
 	def checkBox = { attrs ->
 		def tagInfo = tagParams
 		// Value is the value submitted to the server if the item is checked, not whether or not it is checked
+		// @todo This breaks using "value" to override the bean's property value
         def cbSubmitValue = attrs.remove('value')
         
 		doTag( attrs, { renderParams ->
@@ -732,11 +749,28 @@ class BeanTagLib {
 		})
 	}
 
+    /**
+     * Render a set of radio buttons to represent a range of permitted values (eg. single select)
+     *
+     * Result is structured like this:
+     * MAIN LABEL
+     * N * (OPTION LABEL + WIDGET)
+     *
+     * The special RADIOGROUP_TEMPLATE is used to layout these elements, so that the interaction between the main
+     * label and widget "rows" can be modified
+     */
 	def radioGroup = { attrs ->
 		def tagInfo = tagParams
 
         doTag( attrs, { renderParams ->
 
+            // Write out label for the whole group
+			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
+
+			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
+
+            def widgetPart = new StringBuilder()
+            
             renderParams.beanConstraints?.get(renderParams.propertyName).inList?.eachWithIndex() { currentValue, idx ->
 
                 def tempAttrs = [:] + attrs
@@ -751,27 +785,33 @@ class BeanTagLib {
     			labelParams.required = '' 
      			labelParams.fieldName = tempAttrs['id']
     			labelParams.labelKey = renderParams.beanName + '.' + renderParams.propertyPath + '.' + currentValue
-    			labelParams.label = null // Cancel label override, it makes no sense for multiple radio buttons
     			labelParams.fieldId = tempAttrs['id'] // so "for" is correct
-    			def labelKey = getLabelKeyForField(tempAttrs.remove("labelKey"), 
-    			    renderParams.beanName, renderParams.propertyPath)
     			// Get label using INLIST CONSTRAINT CURRENT VALUE as the fallback label
     			// Pass null as current label as this is per-field labelling which requires the value as part of the key
     			labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath + '.' + currentValue)
-    			def label = tagInfo.LABEL_TEMPLATE.clone().call(labelParams)
+    			def optionlabel = tagInfo.RADIOLABEL_TEMPLATE.clone().call(labelParams)
 
     			def r = g.radio( tempAttrs)
 
-    			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
-
     			// Use the current template closure if set
-				out << tagInfo.RADIOGROUP_TEMPLATE.clone().call(label:label, field:r,
-					required:'', errors: errors,
+				widgetPart << tagInfo.RADIO_TEMPLATE.clone().call(label:optionlabel, field:r,
+					required:'', 
+					errors: errors,
     			    bean: renderParams.bean,
     			    beanName: renderParams.beanName,
     			    labelKey: renderParams.labelKey,
     			    propertyName: renderParams.propertyName)
     		}
+    		
+    		out << tagInfo.RADIOGROUP_TEMPLATE.clone().call(
+    		    label:label, 
+    		    field:widgetPart,
+				required:renderParams.mandatoryFieldFlagToUse, 
+				errors: errors,
+			    bean: renderParams.bean,
+			    beanName: renderParams.beanName,
+			    labelKey: renderParams.labelKey,
+			    propertyName: renderParams.propertyName)
 		})
 	}
 
@@ -864,7 +904,7 @@ class BeanTagLib {
 		attrs._BEAN.bean = attrs.remove('bean') ?: pageScope.variables[attrs._BEAN.beanName]
 
         // Get the value override if there is one
-		attrs._BEAN.value = attrs.remove('value')
+		attrs._BEAN.value = attrs.remove('valueOverride')
 		
 		// If still not resolved to an instance, see if we can create it
 	    def cls = attrs.remove('className')
@@ -874,12 +914,11 @@ class BeanTagLib {
 
 		if (attrs._BEAN.bean) {
 		    // Only go down the property path if the user did NOT override the value
-		    if (attrs._BEAN.value != null) {
-    		    def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.value, attrs._BEAN.propertyName)
-    		    attrs._BEAN.putAll(resolvedBeanInfo)
-		    }
+		    def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.value, attrs._BEAN.propertyName)
+		    attrs._BEAN.putAll(resolvedBeanInfo)
             attrs._BEAN.constraints = attrs.remove('constraints') ?: getBeanConstraints(attrs._BEAN.bean)
 		}        
+		println "Leaving rBAP, value is: ${attrs._BEAN}"
     }
     
 	def doTag(def attrs, Closure renderPart) {
@@ -907,7 +946,6 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		
 		def nameOverride = attrs.remove("name")
 
-		def overrideValue = attrs.remove("value")
 		def defaultValue = attrs.remove("default")
         def overrideConstraints = attrs.remove('constraints')
         
@@ -955,15 +993,11 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 
 		// If there are errors or the value is to be used (see useValueCondition), set it up
 		if (hasFieldErrors || modelHasErrors() || useValue) {
-			if (overrideValue == null) {
-				fieldValue = beanPropertyValue
-				if ((fieldValue == null) && defaultValue) {
-					fieldValue = defaultValue
-				} else if (fieldValue == null) {
-					fieldValue = null
-				}
-			} else {
-				fieldValue = overrideValue
+			fieldValue = beanPropertyValue
+			if ((fieldValue == null) && defaultValue) {
+				fieldValue = defaultValue
+			} else if (fieldValue == null) {
+				fieldValue = null
 			}
 		}
 		
