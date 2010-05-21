@@ -905,7 +905,7 @@ class BeanTagLib {
 
         // Get the value override if there is one
 		attrs._BEAN.value = attrs.remove('valueOverride')
-		
+
 		// If still not resolved to an instance, see if we can create it
 	    def cls = attrs.remove('className')
 		if (!attrs._BEAN.bean && cls) {
@@ -918,7 +918,6 @@ class BeanTagLib {
 		    attrs._BEAN.putAll(resolvedBeanInfo)
             attrs._BEAN.constraints = attrs.remove('constraints') ?: getBeanConstraints(attrs._BEAN.bean)
 		}        
-		println "Leaving rBAP, value is: ${attrs._BEAN}"
     }
     
 	def doTag(def attrs, Closure renderPart) {
