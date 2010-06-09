@@ -596,6 +596,7 @@ class BeanTagLib {
             // If bean is a domain class, ask grails what kind of relationship it is
             // Hibernate proxies/shenanigans means that sometimes getMetaProperty might not be right
             // so we must do this instead
+            // NOTE: using class NAME here because for some Java domain classes this returns FALSE if you pass in the class (grails 1.3.1)
             def domainArtefact = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, renderParams.bean.class.name)
 		    def prop = domainArtefact ? 
 		        domainArtefact.getPropertyByName(renderParams.propertyName) : 
@@ -603,7 +604,7 @@ class BeanTagLib {
 		    
 		    // See if its an association
 		    // @Todo add multiselect support for associations of Set and List
-		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, prop.type)) {
+		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, prop.type.name)) {
 		        if (from instanceof Closure) {
 		            // Let caller apply some kind of logic/sort/criteria
 		            from = overrideFrom()
