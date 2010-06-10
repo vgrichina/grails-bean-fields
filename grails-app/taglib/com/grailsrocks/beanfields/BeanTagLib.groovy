@@ -598,23 +598,23 @@ class BeanTagLib {
             // so we must do this instead
             // NOTE: using class NAME here because for some Java domain classes this returns FALSE if you pass in the class (grails 1.3.1)
             def domainArtefact = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, renderParams.bean.class.name)
-		    def prop = domainArtefact ? 
-		        domainArtefact.getPropertyByName(renderParams.propertyName) : 
+		    def propType = domainArtefact ? 
+		        domainArtefact.getPropertyByName(renderParams.propertyName).referencedPropertyType : 
 		        renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName)
 		    
 		    // See if its an association
 		    // @Todo add multiselect support for associations of Set and List
-		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, prop.type.name)) {
+		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, propType.name)) {
 		        if (from instanceof Closure) {
 		            // Let caller apply some kind of logic/sort/criteria
 		            from = overrideFrom()
 	            } else if (from == null) {
-		            from = prop.type.list() 
+		            from = propType.list() 
 	            }
 	            // Hack for Grails 1.1 bug requiring xxx.id assignment for selecting domain instances
 	            fldname += '.id'
-	            checkValue = renderParams.fieldValue?.id // Compare value to id
-	            attrs.optionKey = 'id' // id field is the key
+	            checkValue = renderParams.fieldValue?.ident() // Compare value to id
+	            attrs.optionKey = { obj -> obj.ident() } // id field is the key
 		    } else if (from == null) {
 		        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
 			    if (!from) {
