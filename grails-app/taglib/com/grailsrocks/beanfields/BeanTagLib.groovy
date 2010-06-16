@@ -598,9 +598,13 @@ class BeanTagLib {
             // so we must do this instead
             // NOTE: using class NAME here because for some Java domain classes this returns FALSE if you pass in the class (grails 1.3.1)
             def domainArtefact = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, renderParams.bean.class.name)
-		    def propType = domainArtefact ? 
-		        domainArtefact.getPropertyByName(renderParams.propertyName).referencedPropertyType : 
-		        renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName)
+		    def propType
+		    if (domainArtefact) {
+		        def prop = domainArtefact.getPropertyByName(renderParams.propertyName)
+		        propType = prop.referencedPropertyType ?: prop.type 
+	        } else {
+		        propType = renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName)
+	        }
 		    
 		    // See if its an association
 		    // @Todo add multiselect support for associations of Set and List
@@ -996,8 +1000,6 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			fieldValue = beanPropertyValue
 			if ((fieldValue == null) && defaultValue) {
 				fieldValue = defaultValue
-			} else if (fieldValue == null) {
-				fieldValue = null
 			}
 		}
 		
