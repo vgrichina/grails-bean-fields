@@ -149,6 +149,12 @@ class BeanTagLib {
 	    return sb.toString()
 	}
 	
+    static final Closure DEFAULT_RADIOGROUPITEM_RENDERING = { args -> 
+	    def sb = new StringBuilder()
+	    sb <<= "${args.field}<label for=\"${args.fieldId}\">${args.label.encodeAsHTML()}</label><br/>"
+	    return sb.toString()
+	}
+
     static final Closure DEFAULT_RADIOGROUP_RENDERING = { args -> 
 	    def sb = new StringBuilder()
 	    sb <<= "${args.label}"
@@ -175,6 +181,7 @@ class BeanTagLib {
 		SELECT_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		CHECKBOX_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		RADIO_TEMPLATE: DEFAULT_FIELD_RENDERING,
+		RADIOGROUPITEM_TEMPLATE: DEFAULT_RADIOGROUPITEM_RENDERING,
 		COUNTRY_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		RADIOGROUP_TEMPLATE: DEFAULT_RADIOGROUP_RENDERING,
 		RADIOLABEL_TEMPLATE: DEFAULT_LABEL_RENDERING,
@@ -276,7 +283,14 @@ class BeanTagLib {
     }
 
     /**
-     * Set the template for radio groups
+     * Set the template for radio group items
+     */
+    def radioGroupItemTemplate = { attrs, body ->
+        setParam('RADIOGROUPITEM_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
+    }
+
+    /**
+     * Set the template for the label for radios
      */
     def radioLabelTemplate = { attrs, body ->
         setParam('RADIOLABEL_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
@@ -794,15 +808,14 @@ class BeanTagLib {
     			// Get label using INLIST CONSTRAINT CURRENT VALUE as the fallback label
     			// Pass null as current label as this is per-field labelling which requires the value as part of the key
     			labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath + '.' + currentValue)
-    			def optionlabel = tagInfo.RADIOLABEL_TEMPLATE.clone().call(labelParams)
+    			def optionlabel = labelParams.label
 
     			def r = g.radio( tempAttrs)
 
     			// Use the current template closure if set
-				widgetPart << tagInfo.RADIO_TEMPLATE.clone().call(label:optionlabel, field:r,
-					required:'', 
-					errors: errors,
+				widgetPart << tagInfo.RADIOGROUPITEM_TEMPLATE.clone().call(label:optionlabel, field:r,
     			    bean: renderParams.bean,
+        			fieldId: tempAttrs['id'], // so "for" is correct
     			    beanName: renderParams.beanName,
     			    labelKey: renderParams.labelKey,
     			    propertyName: renderParams.propertyName)

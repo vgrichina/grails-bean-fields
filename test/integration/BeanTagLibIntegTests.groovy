@@ -208,14 +208,14 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         assertEquals expected.normalize() , result.normalize()
       }
 
-    void testBasicSelectRenderUsingFieldTag() {
+    void testBasicInListRenderUsingFieldTag() {
         def p = new MyPerson()
         p.shippingAddress = new MyAddress()
 
         grails.test.MockUtils.prepareForConstraintsTests(MyPerson, [:], [p])
         grails.test.MockUtils.prepareForConstraintsTests(MyAddress, [:], [p.shippingAddress])
 
-        def expected ="""<label for="title" class=" ">Title*</label><label for="title_0" class=" ">Mister</label><input type="radio" name="title" value="Mr." id="title_0"  /><br/><label for="title_1" class=" ">Misses</label><input type="radio" name="title" value="Mrs." id="title_1"  /><br/>"""
+        def expected ="""<label for="title" class=" ">Title*</label><input type="radio" name="title" value="Mr." id="title_0"  /><label for="title_0">Mister</label><br/><input type="radio" name="title" value="Mrs." id="title_1"  /><label for="title_1">Misses</label><br/>"""
 
         def template = '<bean:field beanName="personInstance" property="title"/>'
         def result = applyTemplate( template, [personInstance: p] )
@@ -274,7 +274,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country" class=" ">Your country*</label><label for="shippingAddress.country_0" class=" ">U.S.A.</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><br/><label for="shippingAddress.country_1" class=" ">United Kingdom</label><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><br/>"""
+        def expected = """<label for="shippingAddress.country" class=" ">Your country*</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><label for="shippingAddress.country_0">U.S.A.</label><br/><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><label for="shippingAddress.country_1">United Kingdom</label><br/>"""
 
         assertEquals expected.normalize(), result.normalize()
       }
