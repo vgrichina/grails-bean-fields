@@ -215,7 +215,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         grails.test.MockUtils.prepareForConstraintsTests(MyPerson, [:], [p])
         grails.test.MockUtils.prepareForConstraintsTests(MyAddress, [:], [p.shippingAddress])
 
-        def expected ="""<label for="title" class=" ">Title*</label><input type="radio" name="title" value="Mr." id="title_0"  /><label for="title_0">Mister</label><br/><input type="radio" name="title" value="Mrs." id="title_1"  /><label for="title_1">Misses</label><br/>"""
+        def expected ="""<label for="title" class=" ">Title*</label><input type="radio" name="title" value="Mr." id="title_0"  /><label for="title_0">Title Mr</label><br/><input type="radio" name="title" value="Mrs." id="title_1"  /><label for="title_1">Title Mrs</label><br/>"""
 
         def template = '<bean:field beanName="personInstance" property="title"/>'
         def result = applyTemplate( template, [personInstance: p] )
@@ -243,7 +243,6 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
       }
 
       void testAdvancedNestedSelectRender() {
-
         def template = '<bean:select beanName="personInstance" property="shippingAddress.country"/>'
         def p = new MyPerson()
         p.shippingAddress = new MyAddress()
@@ -252,13 +251,12 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country" class=" ">Your country*</label><select name="shippingAddress.country" id="shippingAddress.country" >
+        def expected = """<label for="shippingAddress.country" class=" ">Shipping Address Country*</label><select name="shippingAddress.country" id="shippingAddress.country" >
 <option value="US" >US</option>
 <option value="UK" >UK</option>
 </select><br/>"""
 
         assertEquals expected.normalize(), result.normalize()
-
       }
 
       void testRadioNestedDomain(){
@@ -274,7 +272,11 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country" class=" ">Your country*</label><input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  /><label for="shippingAddress.country_0">U.S.A.</label><br/><input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  /><label for="shippingAddress.country_1">United Kingdom</label><br/>"""
+        def expected = """<label for="shippingAddress.country" class=" ">Shipping Address Country*</label>\
+<input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  />\
+<label for="shippingAddress.country_0">Shipping Address Country US</label><br/>\
+<input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  />\
+<label for="shippingAddress.country_1">Shipping Address Country UK</label><br/>"""
 
         assertEquals expected.normalize(), result.normalize()
       }
