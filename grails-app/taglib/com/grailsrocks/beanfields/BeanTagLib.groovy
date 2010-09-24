@@ -577,6 +577,7 @@ class BeanTagLib {
 			    field:input, 
 			    required:renderParams.mandatoryFieldFlagToUse, 
 			    errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
