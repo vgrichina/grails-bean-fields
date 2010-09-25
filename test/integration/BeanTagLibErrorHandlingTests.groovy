@@ -34,4 +34,64 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		assertThat result.trim(), equalTo("error")
     }
 
+    @Test void requiredFlagIsPassedToInputTemplate() {
+        def template = """
+<bean:inputTemplate>\${required}</bean:inputTemplate>
+<bean:input beanName="person" property="title"/>
+"""
+		def person = personWithErrors([:], [title: "blank"])
+
+        def result = applyTemplate(template, [person: person])
+
+		assertThat result.trim(), equalTo("*")
+    }
+
+    @Test void errorClassIsPassedToSelectTemplate() {
+        def template = """
+<bean:selectTemplate>\${errorClassToUse}</bean:selectTemplate>
+<bean:select beanName="person" property="title"/>
+"""
+		def person = personWithErrors([:], [title: "blank"])
+
+        def result = applyTemplate(template, [person: person])
+
+		assertThat result.trim(), equalTo("error")
+    }
+
+    @Test void requiredFlagIsPassedToSelectTemplate() {
+        def template = """
+<bean:selectTemplate>\${required}</bean:selectTemplate>
+<bean:select beanName="person" property="title"/>
+"""
+		def person = personWithErrors([:], [title: "blank"])
+
+        def result = applyTemplate(template, [person: person])
+
+		assertThat result.trim(), equalTo("*")
+    }
+
+    @Test void errorClassIsPassedToCustomFieldTemplate() {
+        def template = """
+<bean:customTemplate>\${errorClassToUse}</bean:customTemplate>
+<bean:customField beanName="person" property="title"/>
+"""
+		def person = personWithErrors([:], [title: "blank"])
+
+        def result = applyTemplate(template, [person: person])
+
+		assertThat result.trim(), equalTo("error")
+    }
+
+    @Test void requiredFlagIsPassedToCustomFieldTemplate() {
+        def template = """
+<bean:customTemplate>\${required}</bean:customTemplate>
+<bean:customField beanName="person" property="title"/>
+"""
+		def person = personWithErrors([:], [title: "blank"])
+
+        def result = applyTemplate(template, [person: person])
+
+		assertThat result.trim(), equalTo("*")
+    }
+
 }

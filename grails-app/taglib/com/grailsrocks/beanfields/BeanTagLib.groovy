@@ -378,8 +378,11 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if setParam
-			out << tagInfo.CUSTOM_TEMPLATE.clone().call(label:label, field:body(),
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			out << tagInfo.CUSTOM_TEMPLATE.clone().call(label:label, 
+				field:body(),
+				required:renderParams.required, 
+				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
@@ -575,7 +578,7 @@ class BeanTagLib {
 
 			out << tagInfo.INPUT_TEMPLATE.clone().call(label:label, 
 			    field:input, 
-			    required:renderParams.mandatoryFieldFlagToUse, 
+			    required:renderParams.required, 
 			    errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -657,8 +660,11 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label, field:select,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label, 
+				field:select,
+				required:renderParams.required,
+				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
