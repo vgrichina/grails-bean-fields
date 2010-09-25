@@ -699,8 +699,11 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.DATE_TEMPLATE.clone().call(label:label, field:datePicker,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			out << tagInfo.DATE_TEMPLATE.clone().call(label:label, 
+				field:datePicker,
+				required:renderParams.required, 
+				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
@@ -729,8 +732,11 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.TEXTAREA_TEMPLATE.clone().call(label:label, field:textArea,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			out << tagInfo.TEXTAREA_TEMPLATE.clone().call(label:label, 
+				field:textArea,
+				required:renderParams.required, 
+				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
@@ -766,8 +772,11 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.CHECKBOX_TEMPLATE.clone().call(label:label, field:checkBox,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			out << tagInfo.CHECKBOX_TEMPLATE.clone().call(label:label,
+				field:checkBox,
+				required:renderParams.required, 
+				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
@@ -831,8 +840,9 @@ class BeanTagLib {
     		out << tagInfo.RADIOGROUP_TEMPLATE.clone().call(
     		    label:label, 
     		    field:widgetPart,
-				required:renderParams.mandatoryFieldFlagToUse, 
+				required:renderParams.required, 
 				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
@@ -862,8 +872,11 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.COUNTRY_TEMPLATE.clone().call( label:label, field:countrySelect,
-				required:renderParams.mandatoryFieldFlagToUse, errors: errors,
+			out << tagInfo.COUNTRY_TEMPLATE.clone().call(label:label, 
+				field:countrySelect,
+				required:renderParams.required, 
+				errors: errors,
+				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
 			    beanName: renderParams.beanName,
 			    labelKey: renderParams.labelKey,
