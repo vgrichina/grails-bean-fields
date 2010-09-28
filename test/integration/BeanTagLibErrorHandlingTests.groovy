@@ -1,9 +1,9 @@
-import grails.test.*
+import grails.test.GroovyPagesTestCase
+import static grails.test.MockUtils.prepareForConstraintsTests
+import static org.hamcrest.CoreMatchers.equalTo
 import org.junit.*
-import org.springframework.validation.*
-import static org.junit.Assert.*
-import static grails.test.MockUtils.*
-import static org.hamcrest.CoreMatchers.*
+import static org.junit.Assert.assertThat
+import static org.junit.matchers.JUnitMatchers.containsString
 
 class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 
@@ -17,21 +17,12 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		grailsApplication.mainContext.messageSource.useCodeAsDefaultMessage = false
 	}
 
-	private static ValidateableBean newBeanInstance(properties, errorCodes = [:]) {
-		def bean = new ValidateableBean(properties)
-		prepareForConstraintsTests(ValidateableBean, [:], [bean])
-		errorCodes.each { field, code ->
-			bean.errors.rejectValue(field, code)
-		}
-		bean
-	}
-
     @Test void errorClassIsPassedToInputTemplate() {
         def template = """
 <bean:inputTemplate>\${errorClassToUse}</bean:inputTemplate>
 <bean:input beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:], [stringfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(stringfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -43,7 +34,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:inputTemplate>\${required}</bean:inputTemplate>
 <bean:input beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -55,7 +46,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:selectTemplate>\${errorClassToUse}</bean:selectTemplate>
 <bean:select beanName="bean" property="enumfield"/>
 """
-		def bean = newBeanInstance([:], [enumfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(enumfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -67,7 +58,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:selectTemplate>\${required}</bean:selectTemplate>
 <bean:select beanName="bean" property="enumfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -79,7 +70,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:customTemplate>\${errorClassToUse}</bean:customTemplate>
 <bean:customField beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:], [stringfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(stringfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -91,7 +82,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:customTemplate>\${required}</bean:customTemplate>
 <bean:customField beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -103,7 +94,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:dateTemplate>\${errorClassToUse}</bean:dateTemplate>
 <bean:date beanName="bean" property="datefield"/>
 """
-		def bean = newBeanInstance([:], [datefield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(datefield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -115,7 +106,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:dateTemplate>\${required}</bean:dateTemplate>
 <bean:date beanName="bean" property="datefield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -127,7 +118,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:textAreaTemplate>\${errorClassToUse}</bean:textAreaTemplate>
 <bean:textArea beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:], [stringfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(stringfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -139,7 +130,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:textAreaTemplate>\${required}</bean:textAreaTemplate>
 <bean:textArea beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -151,7 +142,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:checkBoxTemplate>\${errorClassToUse}</bean:checkBoxTemplate>
 <bean:checkBox beanName="bean" property="booleanfield"/>
 """
-		def bean = newBeanInstance([:], [booleanfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(booleanfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -163,7 +154,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:checkBoxTemplate>\${required}</bean:checkBoxTemplate>
 <bean:checkBox beanName="bean" property="booleanfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -175,7 +166,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:radioGroupTemplate>\${errorClassToUse}</bean:radioGroupTemplate>
 <bean:radioGroup beanName="bean" property="enumfield"/>
 """
-		def bean = newBeanInstance([:], [enumfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(enumfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -187,7 +178,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:radioGroupTemplate>\${required}</bean:radioGroupTemplate>
 <bean:radioGroup beanName="bean" property="enumfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -199,7 +190,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:countryTemplate>\${errorClassToUse}</bean:countryTemplate>
 <bean:country beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:], [stringfield: "nullable"])
+		def bean = build(ValidateableBean).withErrors(stringfield: "nullable").bean
 
         def result = applyTemplate(template, [bean: bean])
 
@@ -211,17 +202,48 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 <bean:countryTemplate>\${required}</bean:countryTemplate>
 <bean:country beanName="bean" property="stringfield"/>
 """
-		def bean = newBeanInstance([:])
+		def bean = build(ValidateableBean).bean
 
         def result = applyTemplate(template, [bean: bean])
 
 		assertThat result.trim(), equalTo("*")
     }
 
+	@Test void errorsAreRenderedOnTopLevelProperties() {
+		def template = """
+<bean:field beanName="person" property="title"/>
+		"""
+
+		def person = build(MyPerson).withErrors("title": "blank").bean
+
+		def result = applyTemplate(template, [person: person])
+
+		assertThat result, containsString("""<label for="title" class=" error">""")
+		assertThat result, containsString("""<div>blank.MyPerson.title<br/></div>""")
+	}
+	
+	@Test void errorsAreRenderedOnNestedProperties() {
+		def template = """
+<bean:field beanName="person" property="shippingAddress.country"/>
+		"""
+
+		def person = build(MyPerson).withProperties(shippingAddress: build(MyAddress)).withErrors("shippingAddress.country": "nullable").bean
+
+		def result = applyTemplate(template, [person: person])
+
+		assertThat result, containsString("""<label for="shippingAddress.country" class=" error">""")
+		assertThat result, containsString("""<div>nullable.MyPerson.shippingAddress.country<br/></div>""")
+	}
+
+	private static <T> BeanBuilder<T> build(Class<T> type) {
+		new BeanBuilder(type)
+	}
+
 }
 
 @org.codehaus.groovy.grails.validation.Validateable
 class ValidateableBean {
+
     String stringfield
 	String enumfield
 	Date datefield
@@ -232,5 +254,31 @@ class ValidateableBean {
 		enumfield nullable: false, inList: ["foo", "bar"]
 		datefield nullable: false
 		booleanfield nullable: false
+	}
+}
+
+class BeanBuilder<T> {
+
+	private T instance
+
+	BeanBuilder(Class<T> type) {
+		instance = type.newInstance()
+		prepareForConstraintsTests type, [:], [instance]
+	}
+
+	BeanBuilder<T> withProperties(Map properties) {
+		instance.properties = properties
+		this
+	}
+
+	BeanBuilder<T> withErrors(Map errors) {
+		errors.each { field, code ->
+			instance.errors.rejectValue(field, code)
+		}
+		this
+	}
+	
+	T getBean() {
+		instance
 	}
 }

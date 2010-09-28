@@ -18,11 +18,9 @@ package com.grailsrocks.beanfields
 
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import org.springframework.validation.Errors
-import org.springframework.web.context.request.RequestContextHolder
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.codehaus.groovy.grails.web.taglib.GroovyPageTagBody
 
 // @todo Add bean:autoForm that takes a bean name and controller/action/url etc and automatically
 // renders the whole form for all properties. Option to include/exclude certain props
@@ -149,21 +147,21 @@ class BeanTagLib {
 	    return sb.toString()
 	}
 	
-    static final Closure DEFAULT_RADIOGROUPITEM_RENDERING = { args -> 
+    static final Closure DEFAULT_RADIOGROUPITEM_RENDERING = { args ->
 	    def sb = new StringBuilder()
 	    sb <<= "${args.field}<label for=\"${args.fieldId}\">${args.label.encodeAsHTML()}</label><br/>"
 	    return sb.toString()
 	}
 
-    static final Closure DEFAULT_RADIOGROUP_RENDERING = { args -> 
+    static final Closure DEFAULT_RADIOGROUP_RENDERING = { args ->
 	    def sb = new StringBuilder()
 	    sb <<= "${args.label}"
 	    if (args.errors) sb <<= "<br/><div>${args.errors}</div>"
 	    sb <<= "${args.field}"
 	    return sb.toString()
 	}
-	
-	static final Closure DEFAULT_LABEL_RENDERING = { args ->
+
+    static final Closure DEFAULT_LABEL_RENDERING = { args ->
         "<label for=\"${args.fieldId}\" class=\"${args.labelClass} ${args.errorClassToUse}\">${args.label.encodeAsHTML()}${args.required}</label>"
     }
 	
@@ -208,11 +206,11 @@ class BeanTagLib {
 		}
     }
 
-    def backupTemplates = { attrs -> 
+    def backupTemplates = { attrs ->
         if (request[BEAN_TEMPLATES_BACKUP]) {
             throw new IllegalStateException('Cannot backup templates, they have not been restored yet and we do do not support nested backups sorry!')
         }
-        
+
         def backup = [:]
         request[BEAN_TEMPLATES_BACKUP] = backup
         tagParams.each { k, v ->
@@ -221,15 +219,15 @@ class BeanTagLib {
             }
         }
     }
-    
-    def restoreTemplates = { attrs -> 
+
+    def restoreTemplates = { attrs ->
         if (request[BEAN_TEMPLATES_BACKUP]) {
             tagParams.putAll(request[BEAN_TEMPLATES_BACKUP])
             request[BEAN_TEMPLATES_BACKUP] = null
         }
     }
 
-    def maxAutoRadioButtons = { attrs, body -> 
+    def maxAutoRadioButtons = { attrs, body ->
         setParam('MAX_AUTO_RADIO_BUTTONS', body().toString().toInteger())
     }
     
@@ -378,9 +376,9 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if setParam
-			out << tagInfo.CUSTOM_TEMPLATE.clone().call(label:label, 
+			out << tagInfo.CUSTOM_TEMPLATE.clone().call(label:label,
 				field:body(),
-				required:renderParams.required, 
+				required:renderParams.required,
 				errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -399,8 +397,8 @@ class BeanTagLib {
 			out << buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 		})
     }
-    
-    def form = { attrs -> 
+
+    def form = { attrs ->
         def beanName = attrs.beanName
         if (!beanName) {
             throwTagError "Tag [form] requires attribute [beanName]"
@@ -497,7 +495,7 @@ class BeanTagLib {
             propertyType = attrs._BEAN.bean.metaClass.getMetaProperty(propName).type
     	    isDomainClass = grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, propertyType)
         }
-	    
+
 	    if (isDomainClass) {
 	        out << select( attrs )
 	    } else {
@@ -578,7 +576,7 @@ class BeanTagLib {
 
 			out << tagInfo.INPUT_TEMPLATE.clone().call(label:label, 
 			    field:input, 
-			    required:renderParams.required, 
+			    required:renderParams.required,
 			    errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -619,11 +617,11 @@ class BeanTagLib {
 		    def propType
 		    if (domainArtefact) {
 		        def prop = domainArtefact.getPropertyByName(renderParams.propertyName)
-		        propType = prop.referencedPropertyType ?: prop.type 
+		        propType = prop.referencedPropertyType ?: prop.type
 	        } else {
 		        propType = renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName)
 	        }
-		    
+
 		    // See if its an association
 		    // @Todo add multiselect support for associations of Set and List
 		    if (grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, propType.name)) {
@@ -631,7 +629,7 @@ class BeanTagLib {
 		            // Let caller apply some kind of logic/sort/criteria
 		            from = overrideFrom()
 	            } else if (from == null) {
-		            from = propType.list() 
+		            from = propType.list()
 	            }
 	            // Hack for Grails 1.1 bug requiring xxx.id assignment for selecting domain instances
 	            fldname += '.id'
@@ -660,7 +658,7 @@ class BeanTagLib {
 
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label, 
+			out << tagInfo.SELECT_TEMPLATE.clone().call(label:label,
 				field:select,
 				required:renderParams.required,
 				errors: errors,
@@ -699,9 +697,9 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.DATE_TEMPLATE.clone().call(label:label, 
+			out << tagInfo.DATE_TEMPLATE.clone().call(label:label,
 				field:datePicker,
-				required:renderParams.required, 
+				required:renderParams.required,
 				errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -732,9 +730,9 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.TEXTAREA_TEMPLATE.clone().call(label:label, 
+			out << tagInfo.TEXTAREA_TEMPLATE.clone().call(label:label,
 				field:textArea,
-				required:renderParams.required, 
+				required:renderParams.required,
 				errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -774,7 +772,7 @@ class BeanTagLib {
 			// Use the current template closure if set
 			out << tagInfo.CHECKBOX_TEMPLATE.clone().call(label:label,
 				field:checkBox,
-				required:renderParams.required, 
+				required:renderParams.required,
 				errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -805,7 +803,7 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
             def widgetPart = new StringBuilder()
-            
+
             renderParams.beanConstraints?.get(renderParams.propertyName).inList?.eachWithIndex() { currentValue, idx ->
 
                 def tempAttrs = [:] + attrs
@@ -817,7 +815,7 @@ class BeanTagLib {
 
     			// Do label per field based on value
     			def labelParams = new HashMap(renderParams)
-    			labelParams.required = '' 
+    			labelParams.required = ''
      			labelParams.fieldName = tempAttrs['id']
     			labelParams.labelKey = renderParams.beanName + '.' + renderParams.propertyPath + '.' + currentValue
     			labelParams.fieldId = tempAttrs['id'] // so "for" is correct
@@ -836,11 +834,11 @@ class BeanTagLib {
     			    labelKey: renderParams.labelKey,
     			    propertyName: renderParams.propertyName)
     		}
-    		
+
     		out << tagInfo.RADIOGROUP_TEMPLATE.clone().call(
-    		    label:label, 
+    		    label:label,
     		    field:widgetPart,
-				required:renderParams.required, 
+				required:renderParams.required,
 				errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -872,9 +870,9 @@ class BeanTagLib {
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
 			// Use the current template closure if set
-			out << tagInfo.COUNTRY_TEMPLATE.clone().call(label:label, 
+			out << tagInfo.COUNTRY_TEMPLATE.clone().call(label:label,
 				field:countrySelect,
-				required:renderParams.required, 
+				required:renderParams.required,
 				errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
 			    bean: renderParams.bean,
@@ -939,7 +937,8 @@ class BeanTagLib {
 
 		// Get the root bean so we can get the current value and check for errors
 		// The user can override with bean="${whatever}" if they really know what they are doing
-		attrs._BEAN.bean = attrs.remove('bean') ?: pageScope.variables[attrs._BEAN.beanName]
+		attrs._BEAN.rootBean = attrs.remove('bean') ?: pageScope.variables[attrs._BEAN.beanName]
+		attrs._BEAN.bean = attrs._BEAN.rootBean
 
         // Get the value override if there is one
 		attrs._BEAN.value = attrs.remove('valueOverride')
@@ -953,7 +952,7 @@ class BeanTagLib {
 		if (attrs._BEAN.bean) {
 		    // Only go down the property path if the user did NOT override the value
 		    def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.value, attrs._BEAN.propertyName)
-		    attrs._BEAN.putAll(resolvedBeanInfo)
+    		attrs._BEAN.putAll(resolvedBeanInfo)
             attrs._BEAN.constraints = attrs.remove('constraints') ?: getBeanConstraints(attrs._BEAN.bean)
 		}        
     }
@@ -964,6 +963,7 @@ class BeanTagLib {
 		def tagInfo = tagParams
 
         // Get the pre-resolved info for this bean and property
+		def rootBean = attrs._BEAN.rootBean
 		def bean = attrs._BEAN.bean // the endpoint bean, not the original root level one!
         def beanName = attrs._BEAN.beanName // the name of the originbal root level bean
         def propertyName = attrs._BEAN.propertyName
@@ -985,7 +985,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 
 		def defaultValue = attrs.remove("default")
         def overrideConstraints = attrs.remove('constraints')
-        
+
 		def useValueCondition = getAttribute(attrs, "useValue", null)
 
 		def useValue = true
@@ -1013,7 +1013,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		def errorClassToUse = ""
 		def mandatoryFieldFlagToUse = ""
 
-		if (doesFieldHaveErrors(bean, propertyName)) {
+		if (doesFieldHaveErrors(rootBean, originalPropertyPath)) {
 			hasFieldErrors = true
 			errorClassToUse = tagInfo.ERROR_CLASS
 		}
@@ -1030,12 +1030,12 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 
 		// If there are errors or the value is to be used (see useValueCondition), set it up
 		if (hasFieldErrors || modelHasErrors() || useValue) {
-			fieldValue = beanPropertyValue
-			if ((fieldValue == null) && defaultValue) {
-				fieldValue = defaultValue
+				fieldValue = beanPropertyValue
+				if ((fieldValue == null) && defaultValue) {
+					fieldValue = defaultValue
+				}
 			}
-		}
-		
+
         def constraints = attrs._BEAN.constraints
 
 		// Get the optional args we do not need so we can echo 'as is'
@@ -1061,7 +1061,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			"propertyPath":cleanPropertyPath,  // Full dotted but non-subscripted property path
 			"labelKey":labelKey,
 			"labelClass":labelClass,
-			"errors": showErrors ? (bean?.metaClass?.hasProperty(bean, 'errors') ? bean?.errors?.getFieldErrors(propertyName) : null) : null
+			"errors": showErrors ? (rootBean?.metaClass?.hasProperty(rootBean, 'errors') ? rootBean?.errors?.getFieldErrors(originalPropertyPath) : null) : null
 		]
 
 		renderPart(renderParams)
@@ -1125,10 +1125,10 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		
 		// The final endpoint bean's property name, excluding the subscript if any
 		def propName
-        
+
         // The final value
         def value = valueOverride
-        
+		
 		// Split the property path eg x.y[4].authors[3].email into the component parts
     	def parts = propertyPath.tokenize('.')
     	def last = parts.size()-1
@@ -1144,11 +1144,11 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
                 def nameWithNoSubscript = subscriptMatch[0][1]
         	    if (idx < last) {
                     if (valueOverride == null) {
-		                actual = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+		            actual = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
 	                }
 	            } else {
                     if (valueOverride == null) {
-		                value = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
+		            value = actual[nameWithNoSubscript][subscriptMatch[0][2].toInteger()]
 	                }
     	            propName = nameWithNoSubscript
 	            }
@@ -1156,11 +1156,11 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		    } else {
         	    if (idx < last) {
                     if (valueOverride == null) {
-  			            actual = actual[pn]
+  			        actual = actual[pn]
 		            }
 		        } else {
                     if (valueOverride == null) {
-		                value = actual[pn]
+		            value = actual[pn]
 	                }
     	            propName = pn
 		        }
