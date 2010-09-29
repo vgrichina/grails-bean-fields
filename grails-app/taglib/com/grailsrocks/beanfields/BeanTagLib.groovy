@@ -17,6 +17,7 @@ package com.grailsrocks.beanfields
 
 
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import org.springframework.context.MessageSourceResolvable
 import org.springframework.validation.Errors
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
@@ -833,7 +834,11 @@ class BeanTagLib {
     			labelParams.fieldId = tempAttrs['id'] // so "for" is correct
     			// Get label using INLIST CONSTRAINT CURRENT VALUE as the fallback label
     			// Pass null as current label as this is per-field labelling which requires the value as part of the key
-    			labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath + '.' + currentValue)
+				if (propertyType in MessageSourceResolvable) {
+					labelParams.label = g.message(message: currentValue)
+				} else {
+    				labelParams.label = getLabelForField( null, labelParams.labelKey, renderParams.propertyPath + '.' + currentValue)
+				}
     			def optionlabel = labelParams.label
 
     			def r = g.radio( tempAttrs)
