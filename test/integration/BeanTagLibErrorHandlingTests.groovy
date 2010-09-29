@@ -1,4 +1,5 @@
 import grails.test.GroovyPagesTestCase
+import org.codehaus.groovy.grails.validation.Validateable
 import static grails.test.MockUtils.prepareForConstraintsTests
 import static org.hamcrest.CoreMatchers.equalTo
 import org.junit.*
@@ -269,7 +270,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 
 }
 
-@org.codehaus.groovy.grails.validation.Validateable
+@Validateable
 class ValidateableBean {
 
     String stringfield

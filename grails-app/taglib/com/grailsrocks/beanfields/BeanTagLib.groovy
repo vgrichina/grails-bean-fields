@@ -636,10 +636,15 @@ class BeanTagLib {
 	            checkValue = renderParams.fieldValue?.ident() // Compare value to id
 	            attrs.optionKey = { obj -> obj.ident() } // id field is the key
 		    } else if (from == null) {
-		        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
-			    if (!from) {
-			        from = renderParams.beanConstraints?."${renderParams.propertyName}"?.range
-		        }
+				def propertyType = renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName).type
+				if (propertyType.isEnum()) {
+					from = propertyType.values()
+				} else {
+					from = renderParams.beanConstraints?."${renderParams.propertyName}"?.inList
+					if (!from) {
+						from = renderParams.beanConstraints?."${renderParams.propertyName}"?.range
+					}
+				}
 	        }
 
 			// Do label
@@ -804,7 +809,14 @@ class BeanTagLib {
 
             def widgetPart = new StringBuilder()
 
-            renderParams.beanConstraints?.get(renderParams.propertyName).inList?.eachWithIndex() { currentValue, idx ->
+			def valueList
+			def propertyType = renderParams.bean.metaClass.getMetaProperty(renderParams.propertyName).type
+			if (propertyType.isEnum()) {
+				valueList = propertyType.values()
+			} else {
+            	valueList = renderParams.beanConstraints?.get(renderParams.propertyName).inList
+			}
+			valueList?.eachWithIndex() { currentValue, idx ->
 
                 def tempAttrs = [:] + attrs
     			// Defer to form taglib
