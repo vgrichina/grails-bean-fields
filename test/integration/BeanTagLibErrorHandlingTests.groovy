@@ -235,6 +235,34 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		assertThat result, containsString("""<div>nullable.MyPerson.shippingAddress.country<br/></div>""")
 	}
 
+	@Test void errorsAreRenderedOnSimpleListProperties() {
+		def template = """
+<bean:field beanName="bean" property="stringlistfield"/>
+		"""
+
+		def bean = build(ValidateableBean).withErrors("stringlistfield": "minSize.notmet").bean
+
+		def result = applyTemplate(template, [bean: bean])
+
+		assertThat result, containsString("""<label for="stringlistfield" class=" error">""")
+		assertThat result, containsString("""<div>minSize.notmet.ValidateableBean.stringlistfield<br/></div>""")
+	}
+
+	@Test void errorsAreRenderedOnIndexesOfSimpleListProperties() {
+		def template = """
+<bean:field beanName="bean" property="stringlistfield[0]"/>
+<bean:field beanName="bean" property="stringlistfield[1]"/>
+<bean:field beanName="bean" property="stringlistfield[2]"/>
+		"""
+
+		def bean = build(ValidateableBean).withProperties([stringlistfield: ["a", null, "b"]]).withErrors("stringlistfield[1]": "nullable").bean
+
+		def result = applyTemplate(template, [bean: bean])
+
+		assertThat result, containsString("""<label for="stringlistfield[1]" class=" error">""")
+		assertThat result, containsString("""<div>nullable.ValidateableBean.stringlistfield[1]<br/></div>""")
+	}
+
 	private static <T> BeanBuilder<T> build(Class<T> type) {
 		new BeanBuilder(type)
 	}
@@ -248,12 +276,16 @@ class ValidateableBean {
 	String enumfield
 	Date datefield
 	Boolean booleanfield
+	List<String> stringlistfield
+
+	static hasMany = [stringlistfield: String]
 
 	static constraints = {
 		stringfield nullable: false
 		enumfield nullable: false, inList: ["foo", "bar"]
 		datefield nullable: false
 		booleanfield nullable: false
+		stringlistfield minSize: 2
 	}
 }
 
