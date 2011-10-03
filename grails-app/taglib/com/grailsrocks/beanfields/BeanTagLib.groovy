@@ -139,15 +139,15 @@ class BeanTagLib {
 	static final String BEAN_TEMPLATES_BACKUP = '_bean_taglib_templates_backup'
 
     static final SUBSCRIPT_PATTERN = /(\w+)\[(\d+)\]/
-    
-    static final Closure DEFAULT_FIELD_RENDERING = { args -> 
+
+    static final Closure DEFAULT_FIELD_RENDERING = { args ->
 	    def sb = new StringBuilder()
 	    sb <<= "${args.label}"
 	    if (args.errors) sb <<= "<br/><div>${args.errors}</div>"
 	    sb <<= "${args.field}<br/>"
 	    return sb.toString()
 	}
-	
+
     static final Closure DEFAULT_RADIOGROUPITEM_RENDERING = { args ->
 	    def sb = new StringBuilder()
 	    sb <<= "${args.field}<label for=\"${args.fieldId}\">${args.label.encodeAsHTML()}</label><br/>"
@@ -165,7 +165,7 @@ class BeanTagLib {
     static final Closure DEFAULT_LABEL_RENDERING = { args ->
         "<label for=\"${args.fieldId}\" class=\"${args.labelClass} ${args.errorClassToUse}\">${args.label.encodeAsHTML()}${args.required}</label>"
     }
-	
+
 	static final Map DEFAULT_PARAMS = Collections.unmodifiableMap([
 		MAX_INPUT_DISPLAY_LENGTH : 60,
 		ERROR_CLASS: "error",
@@ -188,7 +188,7 @@ class BeanTagLib {
 	])
 
     def grailsApplication
-    
+
 	/**
 	 * Return request-specific modified params, or global immutable params if none in request yet
 	 */
@@ -231,7 +231,7 @@ class BeanTagLib {
     def maxAutoRadioButtons = { attrs, body ->
         setParam('MAX_AUTO_RADIO_BUTTONS', body().toString().toInteger())
     }
-    
+
     /**
      * Set the template for labels
      */
@@ -242,21 +242,21 @@ class BeanTagLib {
     /**
      * Set the template for text input fields
      */
-    def inputTemplate = { attrs, body -> 
+    def inputTemplate = { attrs, body ->
         setParam('INPUT_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
-    def textAreaTemplate = { attrs, body -> 
+    def textAreaTemplate = { attrs, body ->
         setParam('TEXTAREA_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
     /**
      * Set the template for text input fields
      */
-    def countryTemplate = { attrs, body -> 
+    def countryTemplate = { attrs, body ->
         setParam('COUNTRY_TEMPLATE', body instanceof Closure ? body : body.@bodyClosure)
     }
 
@@ -366,7 +366,7 @@ class BeanTagLib {
 		    out << tagInfo.LABEL_TEMPLATE.clone().call(renderParams)
 	    })
     }
-    
+
     def customField = { attrs, body ->
         def tagInfo = tagParams
 		doTag( attrs, { renderParams ->
@@ -388,7 +388,7 @@ class BeanTagLib {
 			    propertyName: renderParams.propertyName)
 		})
     }
-    
+
     /**
      * Render just the errors for a specific field
      */
@@ -415,7 +415,7 @@ class BeanTagLib {
             out << field(beanName:beanName, property:p.trim())
         }
     }
-    
+
     /**
      * Render the required indicator IF the specified bean and property are required
      */
@@ -431,19 +431,19 @@ class BeanTagLib {
 		def mandatoryFieldIndicator = attrs.remove("mandatoryField")
 
 		// Get the bean so we can get the current value and check for errors
-		def bean = pageScope.variables[beanName]
+		def bean = pageScope.getVariable(beanName)
 
 		def resolvedBeanInfo = getActualBeanAndProperty(bean, attrs.valueOverride, originalPropertyPath)
 
 		if (isFieldMandatory(resolvedBeanInfo.bean, resolvedBeanInfo.propertyName, attrs.constraints)) {
-			if (mandatoryFieldIndicator) { 
+			if (mandatoryFieldIndicator) {
 				out << mandatoryFieldIndicator
 			} else {
 				out << tagInfo.REQUIRED_INDICATOR
 			}
 		}
     }
-    
+
     /**
 	 * Set parameters relating to the g:modelXXX tags. These are remembered for the duration of the request
 	 * using a trivial "copy on write" mechanism
@@ -463,7 +463,7 @@ class BeanTagLib {
     /**
      * Set the beanName for all enclosed bean tags so you don't need to repeat it
      */
-    def withBean = { attrs, body -> 
+    def withBean = { attrs, body ->
         if (!attrs.beanName) {
             throwTagError "Tag [withBean] requires attribute [beanName]"
         }
@@ -474,7 +474,7 @@ class BeanTagLib {
         out << body()
         tagParams['BEANNAME'] = null
     }
-    
+
     /**
      * Render a field for a bean property, using "smart" logic to work out what type to use
      * This is a convenience method, it is not particularly efficient!
@@ -504,7 +504,7 @@ class BeanTagLib {
 
             def constraints = attrs._BEAN.constraints?.get(propName)
             def inList = constraints?.inList
-            
+
             if (Date.isAssignableFrom(propertyType)) {
                 tagName = 'date'
             } else if (Number.isAssignableFrom(propertyType)) {
@@ -524,13 +524,13 @@ class BeanTagLib {
             out << this."$tagName"(attrs)
         }
     }
-    
+
     def hidden = { attrs ->
         attrs.type = "hidden"
         attrs.noLabel = true
         out << input(attrs)
     }
-	
+
 	/**
      * Render an input field based on the value of a bean property.
      * Uses LABEL_TEMPLATE, INPUT_TEMPLATE and ERROR_TEMPLATE to render.
@@ -571,12 +571,12 @@ class BeanTagLib {
 			}
 
 			def label = renderParams.label ? tagInfo.LABEL_TEMPLATE.clone().call(renderParams) : ''
-			
+
 			def input = """<input class="${suppliedClass} ${renderParams.errorClassToUse}" type="${type}" ${sizeToUse} ${maxLengthToUse} ${renderParams.varArgs} name="${renderParams.fieldName}" value="${renderParams.fieldValue == null ? '' : renderParams.fieldValue.encodeAsHTML()}" />"""
 			def errors = buildErrors( tagInfo.ERROR_TEMPLATE, renderParams.errors)
 
-			out << tagInfo.INPUT_TEMPLATE.clone().call(label:label, 
-			    field:input, 
+			out << tagInfo.INPUT_TEMPLATE.clone().call(label:label,
+			    field:input,
 			    required:renderParams.required,
 			    errors: errors,
 				errorClassToUse: renderParams.errorClassToUse,
@@ -589,13 +589,13 @@ class BeanTagLib {
 
     /**
      * Render a select box from a bean property. Uses LABEL_TEMPLATE, SELECT_TEMPLATE and ERROR_TEMPLATE to render the field.
-     * 
+     *
      * Attributes:
      *
      * from - The list of elements to select from, or a closure or null. If the field the select is for is a domain class,
      * a closure will be run to produce the from list - or if null it will run YourDomainClass.list(). If the field is not a domain class,
      * and from is null, it will be set to the inList or range constraint of the property if any is set.
-     * 
+     *
      * Also accepts standard g:select attributes eg optionKey / optionValue
      */
 	def select = { attrs ->
@@ -607,9 +607,9 @@ class BeanTagLib {
 			def from = overrideFrom
 
             def fldname = renderParams.fieldName
-            
+
             def checkValue = renderParams.fieldValue
-            
+
             // If bean is a domain class, ask grails what kind of relationship it is
             // Hibernate proxies/shenanigans means that sometimes getMetaProperty might not be right
             // so we must do this instead
@@ -758,7 +758,7 @@ class BeanTagLib {
 		// Value is the value submitted to the server if the item is checked, not whether or not it is checked
 		// @todo This breaks using "value" to override the bean's property value
         def cbSubmitValue = attrs.remove('value')
-        
+
 		doTag( attrs, { renderParams ->
 
 			// Do label
@@ -914,7 +914,7 @@ class BeanTagLib {
         if (!name)
             throwTagError("requireBean tag requires attribute [beanName] indicating the class to instantiate")
 
-        def bean = pageScope.variables[name]
+        def bean = pageScope.getVariable(name)
         if (bean == null) {
             bean = ApplicationHolder.application.classLoader.loadClass(cls).newInstance()
             pageScope[name] = bean
@@ -938,7 +938,7 @@ class BeanTagLib {
             return
         }
         attrs._BEAN = [:]
-        
+
         // Resolve the property name and beanName
 		attrs._BEAN.originalPropertyPath = attrs.remove("property")
 		attrs._BEAN.propertyName = attrs._BEAN.originalPropertyPath
@@ -954,7 +954,7 @@ class BeanTagLib {
 
 		// Get the root bean so we can get the current value and check for errors
 		// The user can override with bean="${whatever}" if they really know what they are doing
-		attrs._BEAN.rootBean = attrs.remove('bean') ?: pageScope.variables[attrs._BEAN.beanName]
+		attrs._BEAN.rootBean = attrs.remove('bean') ?: pageScope.getVariable(attrs._BEAN.beanName)
 		attrs._BEAN.bean = attrs._BEAN.rootBean
 
         // Get the value override if there is one
@@ -971,9 +971,9 @@ class BeanTagLib {
 		    def resolvedBeanInfo = getActualBeanAndProperty(attrs._BEAN.bean, attrs._BEAN.value, attrs._BEAN.propertyName)
     		attrs._BEAN.putAll(resolvedBeanInfo)
             attrs._BEAN.constraints = attrs.remove('constraints') ?: getBeanConstraints(attrs._BEAN.bean)
-		}        
+		}
     }
-    
+
 	def doTag(def attrs, Closure renderPart) {
         resolveBeanAndProperty(attrs)
 
@@ -985,19 +985,19 @@ class BeanTagLib {
         def beanName = attrs._BEAN.beanName // the name of the originbal root level bean
         def propertyName = attrs._BEAN.propertyName
         def beanPropertyValue = attrs._BEAN.value
-        
+
         if (bean == null)
             throwTagError("""All model tags require attribute [beanName] to resolve to a bean
 in the model, but it is null. beanName was [${beanName}] and property was [${attrs._BEAN.originalPropertyPath}]""")
 
         // Now we have the bean and property Name we can get one with things
-        
+
 		def showErrors = attrs.remove("showErrors")?.toBoolean()
 		if (showErrors == null) {
 			showErrors = tagInfo['SHOW_ERRORS']
 		}
 		def mandatoryFieldIndicator = attrs.remove("requiredField")
-		
+
 		def nameOverride = attrs.remove("name")
 
 		def defaultValue = attrs.remove("default")
@@ -1024,7 +1024,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 		if (useLabel) {
 			label = getLabelForField( label, labelKey, originalPropertyPath)
 			labelClass = attrs.remove('labelClass') ?: tagInfo.LABEL_CLASS
-		} 
+		}
 
 		def hasFieldErrors = false
 		def errorClassToUse = ""
@@ -1067,11 +1067,11 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 			"required":mandatoryFieldFlagToUse,
 			"fieldName":nameOverride ?: originalPropertyPath, // original full dotted and subscripted path
             "label":label,
-            "fieldValue":fieldValue, 
+            "fieldValue":fieldValue,
             "fieldId":attrs.id,
             "defaultValue":defaultValue,
 			"varArgs":varArgs,
-			"bean":bean, // The endpoint bean 
+			"bean":bean, // The endpoint bean
 			"beanConstraints":constraints,
 			"beanName":beanName,
 			"propertyName":propertyName,  // Final endpoint bean's property name without subscripts
@@ -1113,7 +1113,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
                 if (log.debugEnabled) {
                     log.debug "Bean is of type ${bean.class} - the constraints property was a [${cons.class}]"
                 }
-                
+
 		        // Safety check for the case where bean is no a proper domain/command object
 		        // This avoids confusing errors where constraints comes back as a Closure
 		        if (!(cons instanceof Map)) {
@@ -1136,26 +1136,26 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	  * fieldName can be a simple fieldName (e.g. 'bookName') or compound (e.g. 'author.email') or 'book.authors[2].email'
 	  */
 	 def getActualBeanAndProperty(bean, valueOverride, propertyPath) {
-      	
+
       	// The final endpoint bean
       	def actual = bean
-		
+
 		// The final endpoint bean's property name, excluding the subscript if any
 		def propName
 
         // The final value
         def value = valueOverride
-		
+
 		// Split the property path eg x.y[4].authors[3].email into the component parts
     	def parts = propertyPath.tokenize('.')
     	def last = parts.size()-1
-    	
+
     	// Stores the property names in the path, without subscripts (for label keys)
     	def propPath = []
-    	
+
     	// Loop over the parts of the property path and resolve the actual final object to get property from
     	parts.eachWithIndex { pn, idx ->
-		    def subscriptMatch = (pn =~ SUBSCRIPT_PATTERN) 
+		    def subscriptMatch = (pn =~ SUBSCRIPT_PATTERN)
 		    // If theere was a subscript operator, dereference it
 		    if (subscriptMatch) {
                 def nameWithNoSubscript = subscriptMatch[0][1]
@@ -1209,20 +1209,20 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
         def appContext = grailsAttributes.getApplicationContext()
         def messageSource = appContext.getBean("messageSource")
         def locale = RCU.getLocale(request)
-        def message = ((messageKey instanceof String) || (messageKey instanceof GString)) ? 
-            (failOnError ? messageSource.getMessage( messageKey, null, locale) : 
-                messageSource.getMessage( messageKey, null, null, locale)) : 
+        def message = ((messageKey instanceof String) || (messageKey instanceof GString)) ?
+            (failOnError ? messageSource.getMessage( messageKey, null, locale) :
+                messageSource.getMessage( messageKey, null, null, locale)) :
             messageSource.getMessage( messageKey, locale)
         return message
     }
 
-	def getLabelKeyForField = { labelKey, beanName, propertyName -> 
+	def getLabelKeyForField = { labelKey, beanName, propertyName ->
 		if (!labelKey) {
 			labelKey = beanName + "." + propertyName
 		}
 		return labelKey
     }
-    
+
 	/*
 	 * Get the label for the field:-
 	 *   - if 'label' attribute is specified use it 'as is'
@@ -1234,12 +1234,12 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
 	*/
 	def getLabelForField = { label, labelKey, propPath ->
 	    // deliberately check for null - label = '' means "no label thanks!"
-		if (label == null) { 
+		if (label == null) {
 			label = getMessage(labelKey, false)
 		}
 		if (label == null) {
 			label = (propPath.tokenize('.').collect { pn ->
-    		    def subscriptMatch = (pn =~ SUBSCRIPT_PATTERN) 
+    		    def subscriptMatch = (pn =~ SUBSCRIPT_PATTERN)
 			    if (subscriptMatch) {
 			        return GrailsClassUtils.getNaturalName(subscriptMatch[0][1])+' '+subscriptMatch[0][2]
 			    } else {
