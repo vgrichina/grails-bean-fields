@@ -9,14 +9,14 @@ import com.grailsrocks.beanfields.BeanTagLib
 class BeanTagLibIntegTests extends GroovyPagesTestCase {
 
     static transactional = false
-    
+
     void testTemplateVarExpansion() {
         def t = """
 <bean:inputTemplate>TEST: \${field}</bean:inputTemplate>
 <bean:input beanName="bean1" property="field1"/>
 """
         def result = applyTemplate(t, [bean1:[field1:'value1']])
-        
+
         assertTrue result.indexOf("TEST: ") > 0
         assertTrue result.indexOf('input') > 0
         assertTrue result.indexOf('type="text"') > 0
@@ -37,7 +37,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         assertTrue result.indexOf('name="field1"') > 0
         assertTrue result.indexOf('value="value1"') > 0
     }
-    
+
     void testInputFieldCustonLabel() {
         def t = """
 <bean:input beanName="bean1" property="field1" label="I don't do i18n"/>
@@ -51,7 +51,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         assertTrue result.indexOf('name="field1"') > 0
         assertTrue result.indexOf('value="value1"') > 0
     }
-        
+
     void testSubscriptRootProperty() {
         def t = """
 <bean:input beanName="bean1" property="items[0]"/>
@@ -63,7 +63,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         assertTrue result.indexOf('name="items[0]"') > 0
         assertTrue result.indexOf('value="valueX"') > 0
     }
-            
+
     void testSubscriptNestedProperty() {
         def t = """
 <bean:input beanName="bean1" property="items[0].name"/>
@@ -80,7 +80,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         def t = """
 <bean:input beanName="bean1" property="items[0].products[1].name"/>
 """
-        def result = applyTemplate(t, [bean1:new ListPropertyTester(items:[ 
+        def result = applyTemplate(t, [bean1:new ListPropertyTester(items:[
                 [products: [ [name:'product0_0'], [name:'product0_1'], [name:'product0_2'] ] ],
                 [products: [ [name:'product1_0'], [name:'product1_1'], [name:'product1_2'] ] ]
             ])
@@ -168,7 +168,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         def result = applyTemplate(t, [bean1:[field1:[subfield1:'subvalue1']]])
 
         println "RES: "+result
-        
+
         assertTrue result.indexOf('<label for="field1.subfield1" class=" ">Field1 Subfield1<') > 0
         assertTrue result.indexOf('name="field1.subfield1"') > 0
         assertTrue result.indexOf('value="subvalue1"') > 0
@@ -188,7 +188,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         assertTrue result.indexOf('name="field2"') > 0
         assertTrue result.indexOf('value="value2"') > 0
     }
-    
+
      void testBasicSelectRender() {
         def p = new MyPerson()
         p.shippingAddress = new MyAddress()
@@ -196,10 +196,10 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         grails.test.MockUtils.prepareForConstraintsTests(MyPerson, [:], [p])
         grails.test.MockUtils.prepareForConstraintsTests(MyAddress, [:], [p.shippingAddress])
 
-        def expected ="""<label for="title" class=" ">Title*</label><select name="title" id="title" >
+        def expected ="""<div><label for="title" class=" ">Title*</label><select name="title" id="title" >
 <option value="Mr." >Mr.</option>
 <option value="Mrs." >Mrs.</option>
-</select><br/>"""
+</select></div>"""
 
         def template = '<bean:select beanName="personInstance" property="title"/>'
         def result = applyTemplate( template, [personInstance: p] )
@@ -215,7 +215,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         grails.test.MockUtils.prepareForConstraintsTests(MyPerson, [:], [p])
         grails.test.MockUtils.prepareForConstraintsTests(MyAddress, [:], [p.shippingAddress])
 
-        def expected ="""<label for="title" class=" ">Title*</label><input type="radio" name="title" value="Mr." id="title_0"  /><label for="title_0">Title Mr</label><br/><input type="radio" name="title" value="Mrs." id="title_1"  /><label for="title_1">Title Mrs</label><br/>"""
+        def expected ="""<div><label for="title" class=" ">Title*</label><input type="radio" name="title" value="Mr." id="title_0"  /><label for="title_0">Title Mr</label><input type="radio" name="title" value="Mrs." id="title_1"  /><label for="title_1">Title Mrs</label></div>"""
 
         def template = '<bean:field beanName="personInstance" property="title"/>'
         def result = applyTemplate( template, [personInstance: p] )
@@ -236,7 +236,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.street" class=" ">Shipping Address Street*</label><input class=" " type="text"   id="shippingAddress.street"  name="shippingAddress.street" value="" /><br/>"""
+        def expected = """<div><label for="shippingAddress.street" class=" ">Shipping Address Street*</label><input class=" " type="text"   id="shippingAddress.street"  name="shippingAddress.street" value="" /></div>"""
 
         assertEquals expected, result
 
@@ -251,10 +251,10 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country" class=" ">Shipping Address Country*</label><select name="shippingAddress.country" id="shippingAddress.country" >
+        def expected = """<div><label for="shippingAddress.country" class=" ">Shipping Address Country*</label><select name="shippingAddress.country" id="shippingAddress.country" >
 <option value="US" >US</option>
 <option value="UK" >UK</option>
-</select><br/>"""
+</select></div>"""
 
         assertEquals expected.normalize(), result.normalize()
       }
@@ -272,11 +272,11 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.country" class=" ">Shipping Address Country*</label>\
+        def expected = """<div><label for="shippingAddress.country" class=" ">Shipping Address Country*</label>\
 <input type="radio" name="shippingAddress.country" value="US" id="shippingAddress.country_0"  />\
-<label for="shippingAddress.country_0">Shipping Address Country US</label><br/>\
+<label for="shippingAddress.country_0">Shipping Address Country US</label>\
 <input type="radio" name="shippingAddress.country" value="UK" id="shippingAddress.country_1"  />\
-<label for="shippingAddress.country_1">Shipping Address Country UK</label><br/>"""
+<label for="shippingAddress.country_1">Shipping Address Country UK</label></div>"""
 
         assertEquals expected.normalize(), result.normalize()
       }
@@ -290,9 +290,9 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        // NOTE: This fails prior to Grails 1.3.1 as of an old Grails bug where the hidden field name would be 
+        // NOTE: This fails prior to Grails 1.3.1 as of an old Grails bug where the hidden field name would be
         // shippingAddress._billing when it should be _shippingAddress.billing - this test works with Grails 1.3.1 and higher
-        def expected = """<label for="shippingAddress.billing" class=" ">Shipping Address Billing*</label><input type="hidden" name="_shippingAddress.billing" /><input type="checkbox" name="shippingAddress.billing" id="shippingAddress.billing"  /><br/>"""
+        def expected = """<div><label for="shippingAddress.billing" class=" ">Shipping Address Billing*</label><input type="hidden" name="_shippingAddress.billing" /><input type="checkbox" name="shippingAddress.billing" id="shippingAddress.billing"  /></div>"""
         assertEquals expected.normalize(), result.normalize()
       }
 
@@ -308,7 +308,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
         println "Result:"
         println result
 
-        def expected = """<label for="shippingAddress.street" class=" ">Shipping Address Street*</label><input class=" " type="text"   id="shippingAddress.street"  name="shippingAddress.street" value="" /><br/>"""
+        def expected = """<div><label for="shippingAddress.street" class=" ">Shipping Address Street*</label><input class=" " type="text"   id="shippingAddress.street"  name="shippingAddress.street" value="" /></div>"""
 
         assertEquals expected, result
       }
@@ -316,11 +316,11 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
 
 @org.codehaus.groovy.grails.validation.Validateable
 class MyPerson {
-  
+
   String name, title
-  
+
   MyAddress shippingAddress
-  
+
   static constraints = {
     shippingAddress(required:true, nullable:false)
     title(blank:false, inList:["Mr.", "Mrs."])
@@ -329,10 +329,10 @@ class MyPerson {
 
 @org.codehaus.groovy.grails.validation.Validateable
 class MyAddress {
-  
+
   String country, street
   Boolean billing
-  
+
   static constraints = {
     country(inList:["US","UK"])
   }
@@ -340,7 +340,7 @@ class MyAddress {
 
 @org.codehaus.groovy.grails.validation.Validateable
 class ListPropertyTester {
-  
+
   String title
   List items
 }

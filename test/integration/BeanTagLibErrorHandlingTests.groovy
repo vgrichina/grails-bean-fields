@@ -9,11 +9,11 @@ import static org.junit.matchers.JUnitMatchers.containsString
 class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 
 	def grailsApplication
-	
+
 	@Before void stubMessageSource() {
 	 	grailsApplication.mainContext.messageSource.useCodeAsDefaultMessage = true
 	}
-	
+
 	@After void restoreMessageSource() {
 		grailsApplication.mainContext.messageSource.useCodeAsDefaultMessage = false
 	}
@@ -220,9 +220,9 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		def result = applyTemplate(template, [person: person])
 
 		assertThat result, containsString("""<label for="title" class=" error">""")
-		assertThat result, containsString("""<div>blank.MyPerson.title<br/></div>""")
+		assertThat result, containsString("""<ul><li>blank.MyPerson.title</li></ul>""")
 	}
-	
+
 	@Test void errorsAreRenderedOnNestedProperties() {
 		def template = """
 <bean:field beanName="person" property="shippingAddress.country"/>
@@ -233,7 +233,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		def result = applyTemplate(template, [person: person])
 
 		assertThat result, containsString("""<label for="shippingAddress.country" class=" error">""")
-		assertThat result, containsString("""<div>nullable.MyPerson.shippingAddress.country<br/></div>""")
+		assertThat result, containsString("""<ul><li>nullable.MyPerson.shippingAddress.country</li></ul>""")
 	}
 
 	@Test void errorsAreRenderedOnSimpleListProperties() {
@@ -246,7 +246,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		def result = applyTemplate(template, [bean: bean])
 
 		assertThat result, containsString("""<label for="stringlistfield" class=" error">""")
-		assertThat result, containsString("""<div>minSize.notmet.ValidateableBean.stringlistfield<br/></div>""")
+		assertThat result, containsString("""<ul><li>minSize.notmet.ValidateableBean.stringlistfield</li></ul>""")
 	}
 
 	@Test void errorsAreRenderedOnIndexesOfSimpleListProperties() {
@@ -261,7 +261,7 @@ class BeanTagLibErrorHandlingTests extends GroovyPagesTestCase {
 		def result = applyTemplate(template, [bean: bean])
 
 		assertThat result, containsString("""<label for="stringlistfield[1]" class=" error">""")
-		assertThat result, containsString("""<div>nullable.ValidateableBean.stringlistfield[1]<br/></div>""")
+		assertThat result, containsString("""<ul><li>nullable.ValidateableBean.stringlistfield[1]</li></ul>""")
 	}
 
 	private static <T> BeanBuilder<T> build(Class<T> type) {
@@ -310,7 +310,7 @@ class BeanBuilder<T> {
 		}
 		this
 	}
-	
+
 	T getBean() {
 		instance
 	}

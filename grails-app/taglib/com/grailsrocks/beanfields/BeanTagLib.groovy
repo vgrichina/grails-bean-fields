@@ -142,23 +142,23 @@ class BeanTagLib {
 
     static final Closure DEFAULT_FIELD_RENDERING = { args ->
 	    def sb = new StringBuilder()
-	    sb <<= "${args.label}"
-	    if (args.errors) sb <<= "<br/><div>${args.errors}</div>"
-	    sb <<= "${args.field}<br/>"
+	    sb <<= "<div>${args.label}"
+	    if (args.errors) sb <<= "<ul>${args.errors}</ul>"
+	    sb <<= "${args.field}</div>"
 	    return sb.toString()
 	}
 
     static final Closure DEFAULT_RADIOGROUPITEM_RENDERING = { args ->
 	    def sb = new StringBuilder()
-	    sb <<= "${args.field}<label for=\"${args.fieldId}\">${args.label.encodeAsHTML()}</label><br/>"
+	    sb <<= "${args.field}<label for=\"${args.fieldId}\">${args.label.encodeAsHTML()}</label>"
 	    return sb.toString()
 	}
 
     static final Closure DEFAULT_RADIOGROUP_RENDERING = { args ->
 	    def sb = new StringBuilder()
-	    sb <<= "${args.label}"
-	    if (args.errors) sb <<= "<br/><div>${args.errors}</div>"
-	    sb <<= "${args.field}"
+	    sb <<= "<div>${args.label}"
+	    if (args.errors) sb <<= "<ul>${args.errors}</ul>"
+	    sb <<= "${args.field}</div>"
 	    return sb.toString()
 	}
 
@@ -1199,7 +1199,7 @@ in the model, but it is null. beanName was [${beanName}] and property was [${att
                 output << template.clone().call([error:it, message:getMessage(it)])
             }
             else {
-                output << getMessage(it).encodeAsHTML() + "<br/>"
+                output << "<li>" + getMessage(it).encodeAsHTML() + "</li>"
             }
         }
         return output
