@@ -292,7 +292,7 @@ class BeanTagLibIntegTests extends GroovyPagesTestCase {
 
         // NOTE: This fails prior to Grails 1.3.1 as of an old Grails bug where the hidden field name would be
         // shippingAddress._billing when it should be _shippingAddress.billing - this test works with Grails 1.3.1 and higher
-        def expected = """<div><label for="shippingAddress.billing" class=" ">Shipping Address Billing*</label><input type="hidden" name="_shippingAddress.billing" /><input type="checkbox" name="shippingAddress.billing" id="shippingAddress.billing"  /></div>"""
+        def expected = """<div><input type="hidden" name="_shippingAddress.billing" /><input type="checkbox" name="shippingAddress.billing" id="shippingAddress.billing"  /><label for="shippingAddress.billing" class=" ">Shipping Address Billing*</label></div>"""
         assertEquals expected.normalize(), result.normalize()
       }
 

@@ -148,6 +148,14 @@ class BeanTagLib {
 	    return sb.toString()
 	}
 
+    static final Closure DEFAULT_CHECKBOX_RENDERING = { args ->
+	    def sb = new StringBuilder()
+	    sb <<= "<div>"
+	    if (args.errors) sb <<= "<ul>${args.errors}</ul>"
+	    sb <<= "${args.field}${args.label}</div>"
+	    return sb.toString()
+	}
+
     static final Closure DEFAULT_RADIOGROUPITEM_RENDERING = { args ->
 	    def sb = new StringBuilder()
 	    sb <<= "${args.field}<label for=\"${args.fieldId}\">${args.label.encodeAsHTML()}</label>"
@@ -178,7 +186,7 @@ class BeanTagLib {
 		DATE_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		INPUT_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		SELECT_TEMPLATE: DEFAULT_FIELD_RENDERING,
-		CHECKBOX_TEMPLATE: DEFAULT_FIELD_RENDERING,
+		CHECKBOX_TEMPLATE: DEFAULT_CHECKBOX_RENDERING,
 		RADIO_TEMPLATE: DEFAULT_FIELD_RENDERING,
 		RADIOGROUPITEM_TEMPLATE: DEFAULT_RADIOGROUPITEM_RENDERING,
 		COUNTRY_TEMPLATE: DEFAULT_FIELD_RENDERING,
